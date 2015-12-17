@@ -36,12 +36,7 @@ cliargs_parse_arg() {
 	elif [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
 		timeout=$2
 		clilog_debug "parse_arg: timeout=$timeout"
-		is_numeric $timeout
-		if ! [[ $? -eq 0 ]]; then
-			print_error "timeout is not numeric: $timeout"
-			usage
-			exit 1
-		fi
+		cliargs_assert_numeric "timeout" $timeout
 	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
 		usage
 		exit 0
@@ -55,19 +50,6 @@ cliargs_parse_arg() {
 	fi
 }
 
-init_args
-cliargs_parse "$@"
-
-if [[ "$target_host" == "" ]]; then
-	print_error "Target host is required"
-	usage
-	exit 1
-fi
-
-clilog_debug "target_host: $target_host"
-clilog_debug "timeout:     $timeout"
-clilog_debug "silent:      $silent"
-
 print() {
 	if [[ $silent != true ]]; then
 		echo $@
@@ -76,17 +58,29 @@ print() {
 	fi
 }
 
-((count = timeout))
-while [[ $count -gt 0 ]]; do
-	print -ne "[]"
-	ping -c 1 -W 1 "$target_host" &> /dev/null
-	if [[ $? -eq 0 ]]; then
-		print ""
-		print "Ping successful"
-		exit 0
-	fi
-	((count = count - 1))
-done
-print ""
-print "Ping failed"
-exit 1
+main() {
+	init_args
+	cliargs_parse "$@"
+	cliargs_assert_required "target host" "$target_host"
+
+	clilog_debug "target_host: $target_host"
+	clilog_debug "timeout:     $timeout"
+	clilog_debug "silent:      $silent"
+
+	((count = timeout))
+	while [[ $count -gt 0 ]]; do
+		print -ne "[]"
+		ping -c 1 -W 1 "$target_host" &> /dev/null
+		if [[ $? -eq 0 ]]; then
+			print ""
+			print "Ping successful"
+			exit 0
+		fi
+		((count = count - 1))
+	done
+	print ""
+	print "Ping failed"
+	exit 1
+}
+
+main "$@"

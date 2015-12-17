@@ -54,3 +54,24 @@ cliargs_parse() {
 		exit 1
 	fi
 }
+
+cliargs_assert_numeric() {
+	argName=$1
+	value=$2
+	is_numeric $value
+	if ! [[ $? -eq 0 ]]; then
+		print_error "given $argName is not numeric: $value"
+		usage
+		exit 1
+	fi
+}
+
+cliargs_assert_required() {
+	argName=$1
+	value=$2
+	if [[ "$value" == "" ]]; then
+		print_error "$argName is required"
+		usage
+		exit 1
+	fi
+}

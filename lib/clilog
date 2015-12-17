@@ -14,11 +14,17 @@ declare -r CLILOG_OUT_FILE='FILE' 2> /dev/null
 
 ##### Logging configuration variables #####
 #Logging level (CLILOG_LEVEL_*)
-declare -i clilog_level=CLILOG_LEVEL_SILENT
+if [[ -z "$clilog_level" ]]; then
+	declare -i clilog_level=$CLILOG_LEVEL_SILENT
+fi
 #Log output target type (CLILOG_OUT_*)
-declare clilog_output_type=CLILOG_OUT_STD
+if [[ -z "$clilog_output_type" ]]; then
+	declare clilog_output_type=$CLILOG_OUT_STD
+fi
 #Log file name (in case clilog_output_type=CLILOG_OUT_FILE)
-declare clilog_output_file='cli.log'
+if [[ -z "$clilog_output_file" ]]; then
+	declare clilog_output_file='cli.log'
+fi
 
 ##### Methods #####
 
