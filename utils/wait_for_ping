@@ -1,0 +1,139 @@
+#!/bin/bash
+
+debug_enabled=false
+
+usage() {
+	scriptname=`basename "$0"`
+	echo "Usage: $scriptname [OPTIONS] HOST"
+	echo " Ping to a target host and wait until it responds successfully or timeout reaches."
+	echo "   HOST            - the target host name or IP address"
+	echo " Options:"
+	echo "   -s, --silent    - no output, rely only on the return code (0-success, 1-failure)"
+	echo "   -t, --timeout T - timeout of T seconds"
+	echo "   -h, --help      - this help"
+}
+
+debug() {
+	if [[ $debug_enabled == true ]]; then
+		echo "[DEBUG] $1"
+	fi
+}
+
+error() {
+	echo "ERROR: $1" >&2
+}
+
+init_args() {
+	target_host=""
+	silent=false
+	timeout=30
+}
+
+is_numeric() {
+	debug "is_numeric $1"
+	if [[ $1 =~ ^[0-9]+$ ]]; then
+		return 0
+	fi
+	return 1
+}
+
+is_arg_requires_value() {
+	if [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
+		return 0
+	fi
+	return 1
+}
+
+parse_arg() {
+	debug "parse_arg $1 $2"
+	if [[ "$1" == "-s" ]] || [[ "$1" == "--silent" ]]; then
+		debug "parse_arg: silent=true"
+		silent=true
+		debug "parse_arg: return 1"
+	elif [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
+		timeout=$2
+		debug "parse_arg: timeout=$timeout"
+		is_numeric $timeout
+		if ! [[ $? -eq 0 ]]; then
+			error "timeout is not numeric: $timeout"
+			usage
+			exit 1
+		fi
+	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+		usage
+		exit 0
+	else 
+		if [[ "$target_host" != "" ]]; then
+			error "target host is already set to '$target_host', the value '$1' is redundant"
+			usage
+			exit 1
+		fi
+		target_host=$1
+	fi
+}
+
+parse_args() {
+	debug "parse_args"
+	arg1=""
+	arg2=""
+	for arg in $@; do
+		debug "parse_args: in loop, arg=$arg"
+		if [[ "$arg1" != "" ]]; then
+			debug "parse_args: arg1='$arg1' is not empty, carrying from previous iteration"
+			arg2=$arg
+			parse_arg $arg1 $arg2
+			arg1=""
+			arg2=""
+		else
+			debug "parse_args: arg1='$arg1' is empty"
+			arg1=$arg
+			is_arg_requires_value $arg1
+			if ! [[ $? -eq 0 ]]; then
+				debug "parse_args: $arg1 does not require a value"
+				parse_arg $arg1
+				arg1=""
+			fi
+		fi
+	done
+	if [[ "$arg1" != "" ]]; then
+		error "argument '$arg1' requires a value"
+		usage
+		exit 1
+	fi
+}
+
+init_args
+parse_args "$@"
+
+if [[ "$target_host" == "" ]]; then
+	error "Target host is required"
+	usage
+	exit 1
+fi
+
+debug "target_host: $target_host"
+debug "timeout:     $timeout"
+debug "silent:      $silent"
+
+print() {
+	if [[ $silent != true ]]; then
+		echo $@
+	else
+		debug "print: $@"
+	fi
+}
+
+((count = timeout))
+while [[ $count -gt 0 ]]; do
+	print -ne "[]"
+	ping -c 1 -W 1 "$target_host" &> /dev/null
+	if [[ $? -eq 0 ]]; then
+		print ""
+		print "Ping successful"
+		exit 0
+	fi
+	((count = count - 1))
+done
+print ""
+print "Ping failed"
+exit 1
