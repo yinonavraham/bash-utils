@@ -2,6 +2,10 @@
 source $BASH_UTILS_HOME/lib/clicommon
 source $BASH_UTILS_HOME/lib/clilog
 
+declare -r -a CLIARGS_ARG_HELP=( "-h" "--help" ) 2> /dev/null
+declare -r -a CLIARGS_ARG_SILENT=( "-s" "--silent" ) 2> /dev/null
+declare -r -a CLIARGS_ARG_TIMEOUT=( "-t" "--timeout" ) 2> /dev/null
+
 cliargs_arg_requires_value() {
 	clilog_trace "Default: cliargs_arg_requires_value $@"
 	return 1

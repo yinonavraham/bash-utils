@@ -21,7 +21,7 @@ init_args() {
 }
 
 cliargs_arg_requires_value() {
-	if [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
+	if array_contains CLIARGS_ARG_TIMEOUT[@] $1; then
 		return 0
 	fi
 	return 1
@@ -29,15 +29,15 @@ cliargs_arg_requires_value() {
 
 cliargs_parse_arg() {
 	clilog_debug "parse_arg $1 $2"
-	if [[ "$1" == "-s" ]] || [[ "$1" == "--silent" ]]; then
+	if array_contains CLIARGS_ARG_SILENT[@] $1; then
 		clilog_debug "parse_arg: silent=true"
 		silent=true
 		clilog_trace "parse_arg: return 1"
-	elif [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
+	elif array_contains CLIARGS_ARG_TIMEOUT[@] $1; then
 		timeout=$2
 		clilog_debug "parse_arg: timeout=$timeout"
 		cliargs_assert_numeric "timeout" $timeout
-	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+	elif array_contains CLIARGS_ARG_HELP[@] $1; then
 		usage
 		exit 0
 	else 

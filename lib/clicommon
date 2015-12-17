@@ -10,3 +10,22 @@ is_numeric() {
 	fi
 	return 1
 }
+
+#Check if an array contains a given item
+#Usage example:
+# local arr=( 1 2 3 4 )
+# local item=2
+# if array_contains arr[@] $item; then
+#    ...
+array_contains() {
+	local arr=(${!1})
+	local item=$2
+	((i = 0))
+	for elem in "${arr[@]}"; do
+		((i = i + 1))
+		if [[ "$item" == "$elem" ]]; then
+			return 0
+		fi
+	done
+	return 1
+}
