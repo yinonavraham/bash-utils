@@ -16,7 +16,7 @@ cliargs_parse_arg() {
 }
 
 usage() {
-	cmd=`basename $0`
+	local cmd=`basename $0`
 	echo "Usage: $cmd"
 }
 
@@ -31,8 +31,8 @@ usage() {
 # cliargs_parse "$@"
 cliargs_parse() {
 	clilog_trace "cliargs_parse"
-	arg1=""
-	arg2=""
+	local arg1=""
+	local arg2=""
 	for arg in $@; do
 		clilog_debug "cliargs_parse: in loop, arg=$arg"
 		if [[ "$arg1" != "" ]]; then
@@ -60,8 +60,8 @@ cliargs_parse() {
 }
 
 cliargs_assert_numeric() {
-	argName=$1
-	value=$2
+	local argName=$1
+	local value=$2
 	is_numeric $value
 	if ! [[ $? -eq 0 ]]; then
 		print_error "given $argName is not numeric: $value"
@@ -71,10 +71,22 @@ cliargs_assert_numeric() {
 }
 
 cliargs_assert_required() {
-	argName=$1
-	value=$2
+	local argName=$1
+	local value=$2
 	if [[ "$value" == "" ]]; then
 		print_error "$argName is required"
+		usage
+		exit 1
+	fi
+}
+
+cliargs_assert_not_set() {
+	local argName=$1
+	local value=$2
+	local newvalue=$3
+	clilog_debug "assert not set: argName=$argName, value=$value, newvalue=$newvalue"
+	if [[ "$value" != "" ]]; then
+		print_error "$argName is already set to $value (new value: $newvalue)"
 		usage
 		exit 1
 	fi

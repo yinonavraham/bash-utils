@@ -3,6 +3,8 @@ source $BASH_UTILS_HOME/lib/clicommon
 source $BASH_UTILS_HOME/lib/clilog
 source $BASH_UTILS_HOME/lib/cliargs
 
+#clilog_level=$CLILOG_LEVEL_TRACE
+
 usage() {
 	scriptname=`basename "$0"`
 	echo "Usage: $scriptname [OPTIONS] HOST"
@@ -28,7 +30,7 @@ cliargs_arg_requires_value() {
 }
 
 cliargs_parse_arg() {
-	clilog_debug "parse_arg $1 $2"
+	clilog_debug "parse_arg 1:$1 2:$2"
 	if array_contains CLIARGS_ARG_SILENT[@] $1; then
 		clilog_debug "parse_arg: silent=true"
 		silent=true
@@ -41,11 +43,8 @@ cliargs_parse_arg() {
 		usage
 		exit 0
 	else 
-		if [[ "$target_host" != "" ]]; then
-			print_error "target host is already set to '$target_host', the value '$1' is redundant"
-			usage
-			exit 1
-		fi
+		clilog_debug "setting target host - current=$target_host, new=$1"
+		cliargs_assert_not_set "target host" "$target_host" $1
 		target_host=$1
 	fi
 }
