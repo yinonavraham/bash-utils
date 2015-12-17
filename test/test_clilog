@@ -1,0 +1,64 @@
+#!/bin/bash
+source ../lib/clilog
+
+_test_clilog() {
+	echo "- Silent -"
+	clilog_level=$CLILOG_LEVEL_SILENT
+	clilog_trace "trace on silent"
+	clilog_debug "debug on silent"
+	clilog_info "info on silent"
+	clilog_warn "warn on silent"
+	clilog_error "error on silent"
+	echo "- Error -"
+	clilog_level=$CLILOG_LEVEL_ERROR
+	clilog_trace "trace on error"
+	clilog_debug "debug on error"
+	clilog_info "info on error"
+	clilog_warn "warn on error"
+	clilog_error "error on error"
+	echo "- Warning -"
+	clilog_level=$CLILOG_LEVEL_WARNING
+	clilog_trace "trace on warning"
+	clilog_debug "debug on warning"
+	clilog_info "info on warning"
+	clilog_warn "warn on warning"
+	clilog_error "error on warning"
+	echo "- Info -"
+	clilog_level=$CLILOG_LEVEL_INFO
+	clilog_trace "trace on info"
+	clilog_debug "debug on info"
+	clilog_info "info on info"
+	clilog_warn "warn on info"
+	clilog_error "error on info"
+	echo "- Debug -"
+	clilog_level=$CLILOG_LEVEL_DEBUG
+	clilog_trace "trace on debug"
+	clilog_debug "debug on debug"
+	clilog_info "info on debug"
+	clilog_warn "warn on debug"
+	clilog_error "error on debug"
+	echo "- Trace -"
+	clilog_level=$CLILOG_LEVEL_TRACE
+	clilog_trace "trace on trace"
+	clilog_debug "debug on trace"
+	clilog_info "info on trace"
+	clilog_warn "warn on trace"
+	clilog_error "error on trace"
+}
+
+_test_clilog_outs() {
+	echo "- Test logging to std -"
+	clilog_output_type=$CLILOG_OUT_STD
+	_test_clilog
+	echo "- Test logging to file -"
+	clilog_output_file="tmp/test_clilog.log"
+	mkdir tmp 2> /dev/null
+	rm "$clilog_output_file"
+	echo "File name: $clilog_output_file"
+	clilog_output_type=$CLILOG_OUT_FILE
+	_test_clilog
+	echo "Log file content:"
+	cat "$clilog_output_file"
+}
+
+_test_clilog_outs

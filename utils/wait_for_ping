@@ -1,6 +1,7 @@
 #!/bin/bash
-
-debug_enabled=false
+source $BASH_UTILS_HOME/lib/clicommon
+source $BASH_UTILS_HOME/lib/clilog
+source $BASH_UTILS_HOME/lib/cliargs
 
 usage() {
 	scriptname=`basename "$0"`
@@ -13,49 +14,31 @@ usage() {
 	echo "   -h, --help      - this help"
 }
 
-debug() {
-	if [[ $debug_enabled == true ]]; then
-		echo "[DEBUG] $1"
-	fi
-}
-
-error() {
-	echo "ERROR: $1" >&2
-}
-
 init_args() {
 	target_host=""
 	silent=false
 	timeout=30
 }
 
-is_numeric() {
-	debug "is_numeric $1"
-	if [[ $1 =~ ^[0-9]+$ ]]; then
-		return 0
-	fi
-	return 1
-}
-
-is_arg_requires_value() {
+cliargs_arg_requires_value() {
 	if [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
 		return 0
 	fi
 	return 1
 }
 
-parse_arg() {
-	debug "parse_arg $1 $2"
+cliargs_parse_arg() {
+	clilog_debug "parse_arg $1 $2"
 	if [[ "$1" == "-s" ]] || [[ "$1" == "--silent" ]]; then
-		debug "parse_arg: silent=true"
+		clilog_debug "parse_arg: silent=true"
 		silent=true
-		debug "parse_arg: return 1"
+		clilog_trace "parse_arg: return 1"
 	elif [[ "$1" == "-t" ]] || [[ "$1" == "--timeout" ]]; then
 		timeout=$2
-		debug "parse_arg: timeout=$timeout"
+		clilog_debug "parse_arg: timeout=$timeout"
 		is_numeric $timeout
 		if ! [[ $? -eq 0 ]]; then
-			error "timeout is not numeric: $timeout"
+			print_error "timeout is not numeric: $timeout"
 			usage
 			exit 1
 		fi
@@ -64,7 +47,7 @@ parse_arg() {
 		exit 0
 	else 
 		if [[ "$target_host" != "" ]]; then
-			error "target host is already set to '$target_host', the value '$1' is redundant"
+			print_error "target host is already set to '$target_host', the value '$1' is redundant"
 			usage
 			exit 1
 		fi
@@ -72,54 +55,24 @@ parse_arg() {
 	fi
 }
 
-parse_args() {
-	debug "parse_args"
-	arg1=""
-	arg2=""
-	for arg in $@; do
-		debug "parse_args: in loop, arg=$arg"
-		if [[ "$arg1" != "" ]]; then
-			debug "parse_args: arg1='$arg1' is not empty, carrying from previous iteration"
-			arg2=$arg
-			parse_arg $arg1 $arg2
-			arg1=""
-			arg2=""
-		else
-			debug "parse_args: arg1='$arg1' is empty"
-			arg1=$arg
-			is_arg_requires_value $arg1
-			if ! [[ $? -eq 0 ]]; then
-				debug "parse_args: $arg1 does not require a value"
-				parse_arg $arg1
-				arg1=""
-			fi
-		fi
-	done
-	if [[ "$arg1" != "" ]]; then
-		error "argument '$arg1' requires a value"
-		usage
-		exit 1
-	fi
-}
-
 init_args
-parse_args "$@"
+cliargs_parse "$@"
 
 if [[ "$target_host" == "" ]]; then
-	error "Target host is required"
+	print_error "Target host is required"
 	usage
 	exit 1
 fi
 
-debug "target_host: $target_host"
-debug "timeout:     $timeout"
-debug "silent:      $silent"
+clilog_debug "target_host: $target_host"
+clilog_debug "timeout:     $timeout"
+clilog_debug "silent:      $silent"
 
 print() {
 	if [[ $silent != true ]]; then
 		echo $@
 	else
-		debug "print: $@"
+		clilog_debug "print: $@"
 	fi
 }
 

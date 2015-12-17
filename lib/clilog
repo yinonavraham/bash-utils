@@ -1,0 +1,62 @@
+#!/bin/bash
+
+##### Constants #####
+#Logging level
+declare -r -i CLILOG_LEVEL_SILENT=0 2> /dev/null
+declare -r -i CLILOG_LEVEL_ERROR=1 2> /dev/null
+declare -r -i CLILOG_LEVEL_WARNING=2 2> /dev/null
+declare -r -i CLILOG_LEVEL_INFO=3 2> /dev/null
+declare -r -i CLILOG_LEVEL_DEBUG=4 2> /dev/null
+declare -r -i CLILOG_LEVEL_TRACE=5 2> /dev/null
+#Logging output target
+declare -r CLILOG_OUT_STD='STDOUT' 2> /dev/null
+declare -r CLILOG_OUT_FILE='FILE' 2> /dev/null
+
+##### Logging configuration variables #####
+#Logging level (CLILOG_LEVEL_*)
+declare -i clilog_level=CLILOG_LEVEL_SILENT
+#Log output target type (CLILOG_OUT_*)
+declare clilog_output_type=CLILOG_OUT_STD
+#Log file name (in case clilog_output_type=CLILOG_OUT_FILE)
+declare clilog_output_file='cli.log'
+
+##### Methods #####
+
+_clilog_echo() {
+	level=$1
+	levelName=$2
+	message=$3
+	if [[ $level -le $clilog_level ]]; then
+		fullMessage="[$levelName] $message"
+		if [[ "$clilog_output_type" == "$CLILOG_OUT_FILE" ]]; then
+			echo "$fullMessage" >> "$clilog_output_file"
+		elif [[ "$clilog_output_type" == "$CLILOG_OUT_STD" ]]; then
+			#Write to stderr for warning and error levels, otherwise to stdout
+			if [[ $level -le $CLILOG_LEVEL_WARNING ]]; then
+				echo "$fullMessage" >&2
+			else
+				echo "$fullMessage"
+			fi
+		fi
+	fi
+}
+
+clilog_error() {
+	_clilog_echo $CLILOG_LEVEL_ERROR 'ERROR' "$1"
+}
+
+clilog_warn() {
+	_clilog_echo $CLILOG_LEVEL_WARNING 'WARN' "$1"
+}
+
+clilog_info() {
+	_clilog_echo $CLILOG_LEVEL_INFO 'INFO' "$1"
+}
+
+clilog_debug() {
+	_clilog_echo $CLILOG_LEVEL_DEBUG 'DEBUG' "$1"
+}
+
+clilog_trace() {
+	_clilog_echo $CLILOG_LEVEL_TRACE 'TRACE' "$1"
+}

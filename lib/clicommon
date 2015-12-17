@@ -1,0 +1,13 @@
+#!/bin/bash
+
+print_error() {
+	echo "ERROR: $1" >&2
+}
+
+is_numeric() {
+	debug "is_numeric $1"
+	if [[ $1 =~ ^[0-9]+$ ]]; then
+		return 0
+	fi
+	return 1
+}

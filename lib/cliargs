@@ -1,0 +1,56 @@
+#!/bin/bash
+source $BASH_UTILS_HOME/lib/clicommon
+source $BASH_UTILS_HOME/lib/clilog
+
+cliargs_arg_requires_value() {
+	clilog_trace "Default: cliargs_arg_requires_value $@"
+	return 1
+}
+
+cliargs_parse_arg() {
+	clilog_trace "Default: cliargs_parse_arg $@"
+}
+
+usage() {
+	cmd=`basename $0`
+	echo "Usage: $cmd"
+}
+
+# Parse CLI arguments
+# Requires script specific implementation of the following functions:
+#  - cliargs_parse_arg ARG1 [ARG2]
+#    parses the given argument arg1 and optionally a given arg2 if arg1 requires a value
+#    and sets ascript specific variables accordingly
+#  - cliargs_arg_requires_value ARG
+#    checks if a given argument requires a value (return 0) or not (return 1)
+# Usage example:
+# cliargs_parse "$@"
+cliargs_parse() {
+	clilog_trace "cliargs_parse"
+	arg1=""
+	arg2=""
+	for arg in $@; do
+		clilog_debug "cliargs_parse: in loop, arg=$arg"
+		if [[ "$arg1" != "" ]]; then
+			clilog_debug "cliargs_parse: arg1='$arg1' is not empty, carrying from previous iteration"
+			arg2=$arg
+			cliargs_parse_arg $arg1 $arg2
+			arg1=""
+			arg2=""
+		else
+			clilog_debug "cliargs_parse: arg1='$arg1' is empty"
+			arg1=$arg
+			cliargs_arg_requires_value $arg1
+			if ! [[ $? -eq 0 ]]; then
+				clilog_debug "cliargs_parse: $arg1 does not require a value"
+				cliargs_parse_arg $arg1
+				arg1=""
+			fi
+		fi
+	done
+	if [[ "$arg1" != "" ]]; then
+		print_error "argument '$arg1' requires a value"
+		usage
+		exit 1
+	fi
+}
