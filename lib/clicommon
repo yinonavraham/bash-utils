@@ -29,3 +29,13 @@ array_contains() {
 	done
 	return 1
 }
+
+get_value_or_default() {
+	local value=$1
+	local default=$2
+	if [[ -z $value ]]; then
+		echo "$default"
+	else
+		echo "$value"
+	fi
+}

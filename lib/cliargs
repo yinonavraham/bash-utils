@@ -62,10 +62,11 @@ cliargs_parse() {
 cliargs_assert_numeric() {
 	local argName=$1
 	local value=$2
+	local usageFunction=`get_value_or_default $3 "usage"`
 	is_numeric $value
 	if ! [[ $? -eq 0 ]]; then
 		print_error "given $argName is not numeric: $value"
-		usage
+		eval "$usageFunction"
 		exit 1
 	fi
 }
@@ -73,9 +74,11 @@ cliargs_assert_numeric() {
 cliargs_assert_required() {
 	local argName=$1
 	local value=$2
+	local usageFunction=`get_value_or_default $3 "usage"`
+	clilog_debug "argName='$argName', value='$value', usageFunction='$usageFunction'"
 	if [[ "$value" == "" ]]; then
 		print_error "$argName is required"
-		usage
+		eval "$usageFunction"
 		exit 1
 	fi
 }
@@ -84,10 +87,25 @@ cliargs_assert_not_set() {
 	local argName=$1
 	local value=$2
 	local newvalue=$3
+	local usageFunction=`get_value_or_default $4 "usage"`
 	clilog_debug "assert not set: argName=$argName, value=$value, newvalue=$newvalue"
 	if [[ "$value" != "" ]]; then
 		print_error "$argName is already set to $value (new value: $newvalue)"
-		usage
+		eval "$usageFunction"
+		exit 1
+	fi
+}
+
+cliargs_assert_equals() {
+	local argName=$1
+	local value=$2
+	local expected=$3
+	local usageFunction=`get_value_or_default $4 "usage"`
+	local message=`get_value_or_default "$5" "$argName is not as expected (actual: $value, expected: $expected)"`
+	clilog_debug "assert equals: argName=$argName, value=$value, expected=$expected"
+	if [[ "$value" != "$expected" ]]; then
+		print_error "$message"
+		eval "$usageFunction"
 		exit 1
 	fi
 }

@@ -29,11 +29,11 @@ fi
 ##### Methods #####
 
 _clilog_echo() {
-	level=$1
-	levelName=$2
-	message=$3
+	local level=$1
+	local levelName=$2
+	local message=$3
 	if [[ $level -le $clilog_level ]]; then
-		fullMessage="[$levelName] $message"
+		local fullMessage="[$levelName] $message"
 		if [[ "$clilog_output_type" == "$CLILOG_OUT_FILE" ]]; then
 			echo "$fullMessage" >> "$clilog_output_file"
 		elif [[ "$clilog_output_type" == "$CLILOG_OUT_STD" ]]; then
