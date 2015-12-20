@@ -114,41 +114,43 @@ usage() {
     echo "   $scriptname create repo --help"
 }
 
-declare -r -a           BT_ARGS_HELP=("-h" "--help") 2> /dev/null
-declare -r -a       BT_ARGS_USERNAME=("-u" "--username") 2> /dev/null
-declare -r -a         BT_ARGS_APIKEY=("-p" "--apikey") 2> /dev/null
-declare -r -a           BT_ARGS_USER=("-U" "--user") 2> /dev/null
-declare -r -a            BT_ARGS_ORG=("-O" "--org") 2> /dev/null
-declare -r -a           BT_ARGS_REPO=("-R" "--repo") 2> /dev/null
-declare -r -a            BT_ARGS_PKG=("-P" "--pkg") 2> /dev/null
-declare -r -a        BT_ARGS_VERSION=("-V" "--version")
-declare -r -a           BT_ARGS_PATH=("--path") 2> /dev/null
-declare -r -a       BT_ARGS_DATAFILE=("--data-file") 2> /dev/null
-declare -r -a           BT_ARGS_TYPE=("--type") 2> /dev/null
-declare -r -a        BT_ARGS_PREMIUM=("--premium") 2> /dev/null
-declare -r -a        BT_ARGS_PRIVATE=("--private") 2> /dev/null
-declare -r -a           BT_ARGS_DESC=("--desc") 2> /dev/null
-declare -r -a         BT_ARGS_LABELS=("--labels") 2> /dev/null
-declare -r -a     BT_ARGS_PASSPHRASE=("--passphrase") 2> /dev/null
-declare -r -a     BT_ARGS_PRIVATEKEY=("--privatekey") 2> /dev/null
-declare -r -a        BT_ARGS_LICENSE=("--license") 2> /dev/null
-declare -r -a BT_ARGS_CUSTOM_LICENSE=("--custom-license") 2> /dev/null
-declare -r -a        BT_ARGS_SRC_PKG=("--source-package") 2> /dev/null
-declare -r -a    BT_ARGS_PATH_PREFIX=("--path-prefix") 2> /dev/null
-declare -r -a  BT_ARGS_SYNC_USERNAME=("--sync-username") 2> /dev/null
-declare -r -a  BT_ARGS_SYNC_PASSWORD=("--sync-password") 2> /dev/null
-declare -r -a          BT_ARGS_CLOSE=("--close") 2> /dev/null
-declare -r -a   BT_ARGS_CONTENT_TYPE=("--content-type") 2> /dev/null
-declare -r -a       BT_ARGS_OVERRIDE=("--override") 2> /dev/null
-declare -r -a        BT_ARGS_PUBLISH=("--publish") 2> /dev/null
-declare -r -a        BT_ARGS_EXPLODE=("--explode") 2> /dev/null
-declare -r -a         BT_ARGS_DEBIAN=("--debian") 2> /dev/null
-declare -r -a        BT_ARGS_VAGRANT=("--vagrant") 2> /dev/null
-declare -r -a    BT_ARGS_SEARCH_SHA1=("--search-sha1") 2> /dev/null
-declare -r -a         BT_ARGS_SILENT=("-s" "--silent") 2> /dev/null
-declare -r -a        BT_ARGS_VERBOSE=("-v" "--verbose") 2> /dev/null
-declare -r -a          BT_ARGS_DEBUG=("--debug") 2> /dev/null
-declare -r -a          BT_ARGS_TRACE=("--trace") 2> /dev/null
+declare -r           BT_ARGS_HELP="-h|--help"
+declare -r       BT_ARGS_USERNAME="-u|--username"
+declare -r         BT_ARGS_APIKEY="-p|--apikey"
+declare -r           BT_ARGS_USER="-U|--user"
+declare -r            BT_ARGS_ORG="-O|--org"
+declare -r           BT_ARGS_REPO="-R|--repo"
+declare -r            BT_ARGS_PKG="-P|--pkg"
+declare -r        BT_ARGS_VERSION="-V|--version"
+declare -r           BT_ARGS_PATH="--path"
+declare -r       BT_ARGS_DATAFILE="--data-file"
+declare -r           BT_ARGS_TYPE="--type"
+declare -r        BT_ARGS_PREMIUM="--premium"
+declare -r        BT_ARGS_PRIVATE="--private"
+declare -r           BT_ARGS_DESC="--desc"
+declare -r         BT_ARGS_LABELS="--labels"
+declare -r     BT_ARGS_PASSPHRASE="--passphrase"
+declare -r     BT_ARGS_PRIVATEKEY="--privatekey"
+declare -r        BT_ARGS_LICENSE="--license"
+declare -r BT_ARGS_CUSTOM_LICENSE="--custom-license"
+declare -r        BT_ARGS_SRC_PKG="--source-package"
+declare -r    BT_ARGS_PATH_PREFIX="--path-prefix"
+declare -r  BT_ARGS_SYNC_USERNAME="--sync-username"
+declare -r  BT_ARGS_SYNC_PASSWORD="--sync-password"
+declare -r          BT_ARGS_CLOSE="--close"
+declare -r   BT_ARGS_CONTENT_TYPE="--content-type"
+declare -r       BT_ARGS_OVERRIDE="--override"
+declare -r        BT_ARGS_PUBLISH="--publish"
+declare -r        BT_ARGS_EXPLODE="--explode"
+declare -r         BT_ARGS_DEBIAN="--debian"
+declare -r        BT_ARGS_VAGRANT="--vagrant"
+declare -r    BT_ARGS_SEARCH_SHA1="--search-sha1"
+declare -r         BT_ARGS_SILENT="-s|--silent"
+declare -r        BT_ARGS_VERBOSE="-v|--verbose"
+declare -r          BT_ARGS_DEBUG="--debug"
+declare -r          BT_ARGS_TRACE="--trace"
+
+declare -r BT_ARGS_REQUIRE_VALUE="|$BT_ARGS_USERNAME|$BT_ARGS_APIKEY|$BT_ARGS_USER|$BT_ARGS_ORG|$BT_ARGS_REPO|$BT_ARGS_PKG|$BT_ARGS_VERSION|$BT_ARGS_PATH|$BT_ARGS_DATAFILE|$BT_ARGS_TYPE|$BT_ARGS_TYPE|$BT_ARGS_DESC|$BT_ARGS_LABELS|$BT_ARGS_PASSPHRASE|$BT_ARGS_PRIVATEKEY|$BT_ARGS_LICENSE|$BT_ARGS_CUSTOM_LICENSE|$BT_ARGS_SRC_PKG|$BT_ARGS_PATH_PREFIX|$BT_ARGS_SYNC_USERNAME|$BT_ARGS_SYNC_PASSWORD|$BT_ARGS_CONTENT_TYPE|$BT_ARGS_DEBIAN|$BT_ARGS_VAGRANT|"
 
 _init_args() {
     username="$BINTRAY_USERNAME"
@@ -161,51 +163,7 @@ _init_args() {
 
 cliargs_arg_requires_value() {
     clilog_trace "cliargs_arg_requires_value: 1:$1"
-    if array_contains BT_ARGS_LICENSE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_PRIVATEKEY[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_PASSPHRASE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_LABELS[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_DESC[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_TYPE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_DATAFILE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_PATH[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_PKG[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_VERSION[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_REPO[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_ORG[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_USER[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_APIKEY[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_USERNAME[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_CONTENT_TYPE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_SYNC_USERNAME[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_SYNC_PASSWORD[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_PATH_PREFIX[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_SRC_PKG[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_CUSTOM_LICENSE[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_VAGRANT[@] $1; then
-        return 0
-    elif array_contains BT_ARGS_DEBIAN[@] $1; then
+    if [[ "$BT_ARGS_REQUIRE_VALUE" == *"|$1|"* ]]; then
         return 0
     fi
     return 1
@@ -213,75 +171,75 @@ cliargs_arg_requires_value() {
 
 cliargs_parse_arg() {
     clilog_trace "cliargs_parse_arg: 1:$1 2:$2"
-    if array_contains BT_ARGS_LICENSE[@] $1; then
+    if [[ "|$BT_ARGS_LICENSE|" == *"|$1|"* ]]; then
         license="$2"
-    elif array_contains BT_ARGS_PRIVATEKEY[@] $1; then
+    elif [[ "|$BT_ARGS_PRIVATEKEY|" == *"|$1|"* ]]; then
         privateKeyFile="$2"
-    elif array_contains BT_ARGS_PASSPHRASE[@] $1; then
+    elif [[ "|$BT_ARGS_PASSPHRASE|" == *"|$1|"* ]]; then
         passphrase="$2"
-    elif array_contains BT_ARGS_LABELS[@] $1; then
+    elif [[ "|$BT_ARGS_LABELS|" == *"|$1|"* ]]; then
         labels="$2"
-    elif array_contains BT_ARGS_DESC[@] $1; then
+    elif [[ "|$BT_ARGS_DESC|" == *"|$1|"* ]]; then
         description="$2"
-    elif array_contains BT_ARGS_TYPE[@] $1; then
+    elif [[ "|$BT_ARGS_TYPE|" == *"|$1|"* ]]; then
         repoType="$2"
-    elif array_contains BT_ARGS_DATAFILE[@] $1; then
+    elif [[ "|$BT_ARGS_DATAFILE|" == *"|$1|"* ]]; then
         dataFile="$2"
-    elif array_contains BT_ARGS_PATH[@] $1; then
+    elif [[ "|$BT_ARGS_PATH|" == *"|$1|"* ]]; then
         path="$2"
-    elif array_contains BT_ARGS_PKG[@] $1; then
+    elif [[ "|$BT_ARGS_PKG|" == *"|$1|"* ]]; then
         pkg="$2"
-    elif array_contains BT_ARGS_VERSION[@] $1; then
+    elif [[ "|$BT_ARGS_VERSION|" == *"|$1|"* ]]; then
         version="$2"
-    elif array_contains BT_ARGS_REPO[@] $1; then
+    elif [[ "|$BT_ARGS_REPO|" == *"|$1|"* ]]; then
         repo="$2"
-    elif array_contains BT_ARGS_ORG[@] $1; then
+    elif [[ "|$BT_ARGS_ORG|" == *"|$1|"* ]]; then
         org="$2"
-    elif array_contains BT_ARGS_USER[@] $1; then
+    elif [[ "|$BT_ARGS_USER|" == *"|$1|"* ]]; then
         user="$2"
-    elif array_contains BT_ARGS_APIKEY[@] $1; then
+    elif [[ "|$BT_ARGS_APIKEY|" == *"|$1|"* ]]; then
         apikey="$2"
-    elif array_contains BT_ARGS_USERNAME[@] $1; then
+    elif [[ "|$BT_ARGS_USERNAME|" == *"|$1|"* ]]; then
         username="$2"
-    elif array_contains BT_ARGS_CONTENT_TYPE[@] $1; then
+    elif [[ "|$BT_ARGS_CONTENT_TYPE|" == *"|$1|"* ]]; then
         contentType="$2"
-    elif array_contains BT_ARGS_SYNC_USERNAME[@] $1; then
+    elif [[ "|$BT_ARGS_SYNC_USERNAME|" == *"|$1|"* ]]; then
         syncUsername="$2"
-    elif array_contains BT_ARGS_SYNC_PASSWORD[@] $1; then
+    elif [[ "|$BT_ARGS_SYNC_PASSWORD|" == *"|$1|"* ]]; then
         syncPassword="$2"
-    elif array_contains BT_ARGS_PATH_PREFIX[@] $1; then
+    elif [[ "|$BT_ARGS_PATH_PREFIX|" == *"|$1|"* ]]; then
         pathPrefix="$2"
-    elif array_contains BT_ARGS_SRC_PKG[@] $1; then
+    elif [[ "|$BT_ARGS_SRC_PKG|" == *"|$1|"* ]]; then
         sourcePkg="$2"
-    elif array_contains BT_ARGS_CUSTOM_LICENSE[@] $1; then
+    elif [[ "|$BT_ARGS_CUSTOM_LICENSE|" == *"|$1|"* ]]; then
         customLicense="$2"
-    elif array_contains BT_ARGS_VAGRANT[@] $1; then
+    elif [[ "|$BT_ARGS_VAGRANT|" == *"|$1|"* ]]; then
         vagrantBox="$2"
-    elif array_contains BT_ARGS_DEBIAN[@] $1; then
+    elif [[ "|$BT_ARGS_DEBIAN|" == *"|$1|"* ]]; then
         debianCoords="$2"
-    elif array_contains BT_ARGS_HELP[@] $1; then
+    elif [[ "|$BT_ARGS_HELP|" == *"|$1|"* ]]; then
         showHelp=true
-    elif array_contains BT_ARGS_PREMIUM[@] $1; then
+    elif [[ "|$BT_ARGS_PREMIUM|" == *"|$1|"* ]]; then
         premium=true
-    elif array_contains BT_ARGS_PRIVATE[@] $1; then
+    elif [[ "|$BT_ARGS_PRIVATE|" == *"|$1|"* ]]; then
         private=true
-    elif array_contains BT_ARGS_SILENT[@] $1; then
+    elif [[ "|$BT_ARGS_SILENT|" == *"|$1|"* ]]; then
         silent=true
-    elif array_contains BT_ARGS_VERBOSE[@] $1; then
+    elif [[ "|$BT_ARGS_VERBOSE|" == *"|$1|"* ]]; then
         verbose=true
-    elif array_contains BT_ARGS_CLOSE[@] $1; then
+    elif [[ "|$BT_ARGS_CLOSE|" == *"|$1|"* ]]; then
         syncClose=true
-    elif array_contains BT_ARGS_OVERRIDE[@] $1; then
+    elif [[ "|$BT_ARGS_OVERRIDE|" == *"|$1|"* ]]; then
         override=true
-    elif array_contains BT_ARGS_PUBLISH[@] $1; then
+    elif [[ "|$BT_ARGS_PUBLISH|" == *"|$1|"* ]]; then
         publish=true
-    elif array_contains BT_ARGS_EXPLODE[@] $1; then
+    elif [[ "|$BT_ARGS_EXPLODE|" == *"|$1|"* ]]; then
         explode=true
-    elif array_contains BT_ARGS_SEARCH_SHA1[@] $1; then
+    elif [[ "|$BT_ARGS_SEARCH_SHA1|" == *"|$1|"* ]]; then
         searchBySha1=true
-    elif array_contains BT_ARGS_DEBUG[@] $1; then
+    elif [[ "|$BT_ARGS_DEBUG|" == *"|$1|"* ]]; then
         clilog_level=$CLILOG_LEVEL_DEBUG
-    elif array_contains BT_ARGS_TRACE[@] $1; then
+    elif [[ "|$BT_ARGS_TRACE|" == *"|$1|"* ]]; then
         clilog_level=$CLILOG_LEVEL_TRACE
     else
         argsArray+=("$1")
