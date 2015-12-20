@@ -1,0 +1,418 @@
+#!/bin/bash
+source $BASH_UTILS_HOME/lib/cliargs
+source $BASH_UTILS_HOME/lib/clicommon
+source $BASH_UTILS_HOME/lib/clilog
+
+# bt login -u USERNAME -p APIKEY
+# --- BT CLI Config ---
+# bt config set NAME VALUE
+# bt config get NAME
+# bt config unset NAME
+# bt config list
+# --- Repository ---
+# bt get repo NAME [-U USER | -O ORG]
+# bt create repo NAME [-O ORG] [--data-file FILE] [--type TYPE] [--premium] [--private] [--desc DESC] [--labels CSV]
+# bt update repo NAME [-O ORG] [--data-file FILE] [--desc DESC] [--labels CSV]
+# bt delete repo NAME [-O ORG]
+# bt search repo NAME [--desc DESC]
+# bt calc metadata [-O ORG] [-R REPO] [--path PATH] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
+# --- Package ---
+# bt get package NAME [-U USER | -O ORG] [-R REPO]
+# bt create package NAME [-O ORG] [-R REPO] [--data-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV]
+# bt update package NAME [-O ORG] [-R REPO] [--data-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV]
+# bt delete package NAME [-O ORG] [-R REPO]
+# bt link package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG [--data-file FILE] [--path-prefix PATH]
+# bt unlink package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG
+# bt search package NAME [-U USER|-O ORG] [-R REPO] [--desc DESC]
+# --- Version ---
+# bt get version NAME [-U USER | -O ORG] [-R REPO] [-P PACKAGE]
+# bt create version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--desc DESC]
+# bt update version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--desc DESC]
+# bt delete version NAME [-O ORG] [-R REPO] [-P PACKAGE]
+# bt sign version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
+# bt sync maven-central [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--data-file FILE] [--sync-username USERNAME] [--sync-password PASSWORD] [--close]
+# --- File ---
+# bt get files [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--include-unpublished]
+# bt upload FILE PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--content-type TYPE] [--override] [--publish] [--explode] [--debian DISTS:COMPS:ARCHS] [--vagrant BOX]
+# bt download PATH FILE [-O ORG] [-R REPO]
+# bt delete file PATH [-O ORG] [-R REPO]
+# bt sign file PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
+# bt search file NAME [-U USER|-O ORG] [-R REPO] [--search-sha1]
+
+# --- Options ---
+# -O, --org ORG
+# -R, --repo REPO
+# -P, --pkg PKG
+# -V, --version VERSION
+#     --path PATH
+#     --data-file FILE
+#     --type TYPE
+#     --premium
+#     --private
+#     --desc DESC
+#     --labels CSV
+#     --passphrase PASSPHRASE
+#     --privatekey FILE
+#     --license CSV
+#     --custom-license CSV
+#     --source-package SUBJ/REPO/PKG
+#     --path-prefix PATH
+#     --sync-username USERNAME
+#     --sync-password PASSWORD
+#     --close
+#     --content-type TYPE
+#     --override
+#     --publish
+#     --explode
+#     --debian DISTS:COMPS:ARCHS
+#     --vagrant BOX
+#     --search-sha1
+# -s, --silent
+# -v, --verbose
+# -u, --username USERNAME
+# -p, --apikey APIKEY
+
+#Exit codes:
+# 0 - success
+# 101 - unauthorized
+# 100 - bad request
+# 103 - forbidden
+# 104 - not found
+# 1 - general error
+# 109 - conflict
+
+usage() {
+    local scriptname=`basename $0`
+    echo "Usage: $scriptname ACTION [OBJECT] [ARGS] [OPTIONS]"
+    echo "   ACTION  - The action to execute. Available actions:"
+    echo "             login"
+    echo "             get"
+    echo "             create"
+    echo "             update"
+    echo "             delete"
+    echo "             sign"
+    echo "             calc"
+    echo "             link"
+    echo "             unlink"
+    echo "             sync"
+    echo "             download"
+    echo "             upload"
+    echo "             search"
+    echo "   OBJECT  - The object type, one of:"
+    echo "             repo"
+    echo "             package"
+    echo "             version"
+    echo "             file(s)"
+    echo "             metadata"
+    echo "   ARGS    - The arguments for the command (specific per command)"
+    echo "   OPTIONS - The options for the command (specific per command)"
+    echo " For further details on a specific command, use -h or --help with that command."
+    echo " E.g. use the following example to get the specific help for creating a repo:"
+    echo "   $scriptname create repo --help"
+}
+
+declare -r -a           BT_ARGS_HELP=("-h" "--help") 2> /dev/null
+declare -r -a       BT_ARGS_USERNAME=("-u" "--username") 2> /dev/null
+declare -r -a         BT_ARGS_APIKEY=("-p" "--apikey") 2> /dev/null
+declare -r -a           BT_ARGS_USER=("-U" "--user") 2> /dev/null
+declare -r -a            BT_ARGS_ORG=("-O" "--org") 2> /dev/null
+declare -r -a           BT_ARGS_REPO=("-R" "--repo") 2> /dev/null
+declare -r -a            BT_ARGS_PKG=("-P" "--pkg") 2> /dev/null
+declare -r -a        BT_ARGS_VERSION=("-V" "--version")
+declare -r -a           BT_ARGS_PATH=("--path") 2> /dev/null
+declare -r -a       BT_ARGS_DATAFILE=("--data-file") 2> /dev/null
+declare -r -a           BT_ARGS_TYPE=("--type") 2> /dev/null
+declare -r -a        BT_ARGS_PREMIUM=("--premium") 2> /dev/null
+declare -r -a        BT_ARGS_PRIVATE=("--private") 2> /dev/null
+declare -r -a           BT_ARGS_DESC=("--desc") 2> /dev/null
+declare -r -a         BT_ARGS_LABELS=("--labels") 2> /dev/null
+declare -r -a     BT_ARGS_PASSPHRASE=("--passphrase") 2> /dev/null
+declare -r -a     BT_ARGS_PRIVATEKEY=("--privatekey") 2> /dev/null
+declare -r -a        BT_ARGS_LICENSE=("--license") 2> /dev/null
+declare -r -a BT_ARGS_CUSTOM_LICENSE=("--custom-license") 2> /dev/null
+declare -r -a        BT_ARGS_SRC_PKG=("--source-package") 2> /dev/null
+declare -r -a    BT_ARGS_PATH_PREFIX=("--path-prefix") 2> /dev/null
+declare -r -a  BT_ARGS_SYNC_USERNAME=("--sync-username") 2> /dev/null
+declare -r -a  BT_ARGS_SYNC_PASSWORD=("--sync-password") 2> /dev/null
+declare -r -a          BT_ARGS_CLOSE=("--close") 2> /dev/null
+declare -r -a   BT_ARGS_CONTENT_TYPE=("--content-type") 2> /dev/null
+declare -r -a       BT_ARGS_OVERRIDE=("--override") 2> /dev/null
+declare -r -a        BT_ARGS_PUBLISH=("--publish") 2> /dev/null
+declare -r -a        BT_ARGS_EXPLODE=("--explode") 2> /dev/null
+declare -r -a         BT_ARGS_DEBIAN=("--debian") 2> /dev/null
+declare -r -a        BT_ARGS_VAGRANT=("--vagrant") 2> /dev/null
+declare -r -a    BT_ARGS_SEARCH_SHA1=("--search-sha1") 2> /dev/null
+declare -r -a         BT_ARGS_SILENT=("-s" "--silent") 2> /dev/null
+declare -r -a        BT_ARGS_VERBOSE=("-v" "--verbose") 2> /dev/null
+declare -r -a          BT_ARGS_DEBUG=("--debug") 2> /dev/null
+declare -r -a          BT_ARGS_TRACE=("--trace") 2> /dev/null
+
+_init_args() {
+    username="$BINTRAY_USERNAME"
+    apikey="$BINTRAY_APIKEY"
+    org="$BINTRAY_ORG"
+    repo="$BINTRAY_REPO"
+    package="$BINTRAY_PACKAGE"
+    argsArray=()
+}
+
+cliargs_arg_requires_value() {
+    clilog_trace "cliargs_arg_requires_value: 1:$1"
+    if array_contains BT_ARGS_LICENSE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_PRIVATEKEY[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_PASSPHRASE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_LABELS[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_DESC[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_TYPE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_DATAFILE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_PATH[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_PKG[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_VERSION[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_REPO[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_ORG[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_USER[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_APIKEY[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_USERNAME[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_CONTENT_TYPE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_SYNC_USERNAME[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_SYNC_PASSWORD[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_PATH_PREFIX[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_SRC_PKG[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_CUSTOM_LICENSE[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_VAGRANT[@] $1; then
+        return 0
+    elif array_contains BT_ARGS_DEBIAN[@] $1; then
+        return 0
+    fi
+    return 1
+}
+
+cliargs_parse_arg() {
+    clilog_trace "cliargs_parse_arg: 1:$1 2:$2"
+    if array_contains BT_ARGS_LICENSE[@] $1; then
+        license="$2"
+    elif array_contains BT_ARGS_PRIVATEKEY[@] $1; then
+        privateKeyFile="$2"
+    elif array_contains BT_ARGS_PASSPHRASE[@] $1; then
+        passphrase="$2"
+    elif array_contains BT_ARGS_LABELS[@] $1; then
+        labels="$2"
+    elif array_contains BT_ARGS_DESC[@] $1; then
+        description="$2"
+    elif array_contains BT_ARGS_TYPE[@] $1; then
+        repoType="$2"
+    elif array_contains BT_ARGS_DATAFILE[@] $1; then
+        dataFile="$2"
+    elif array_contains BT_ARGS_PATH[@] $1; then
+        path="$2"
+    elif array_contains BT_ARGS_PKG[@] $1; then
+        pkg="$2"
+    elif array_contains BT_ARGS_VERSION[@] $1; then
+        version="$2"
+    elif array_contains BT_ARGS_REPO[@] $1; then
+        repo="$2"
+    elif array_contains BT_ARGS_ORG[@] $1; then
+        org="$2"
+    elif array_contains BT_ARGS_USER[@] $1; then
+        user="$2"
+    elif array_contains BT_ARGS_APIKEY[@] $1; then
+        apikey="$2"
+    elif array_contains BT_ARGS_USERNAME[@] $1; then
+        username="$2"
+    elif array_contains BT_ARGS_CONTENT_TYPE[@] $1; then
+        contentType="$2"
+    elif array_contains BT_ARGS_SYNC_USERNAME[@] $1; then
+        syncUsername="$2"
+    elif array_contains BT_ARGS_SYNC_PASSWORD[@] $1; then
+        syncPassword="$2"
+    elif array_contains BT_ARGS_PATH_PREFIX[@] $1; then
+        pathPrefix="$2"
+    elif array_contains BT_ARGS_SRC_PKG[@] $1; then
+        sourcePkg="$2"
+    elif array_contains BT_ARGS_CUSTOM_LICENSE[@] $1; then
+        customLicense="$2"
+    elif array_contains BT_ARGS_VAGRANT[@] $1; then
+        vagrantBox="$2"
+    elif array_contains BT_ARGS_DEBIAN[@] $1; then
+        debianCoords="$2"
+    elif array_contains BT_ARGS_HELP[@] $1; then
+        showHelp=true
+    elif array_contains BT_ARGS_PREMIUM[@] $1; then
+        premium=true
+    elif array_contains BT_ARGS_PRIVATE[@] $1; then
+        private=true
+    elif array_contains BT_ARGS_SILENT[@] $1; then
+        silent=true
+    elif array_contains BT_ARGS_VERBOSE[@] $1; then
+        verbose=true
+    elif array_contains BT_ARGS_CLOSE[@] $1; then
+        syncClose=true
+    elif array_contains BT_ARGS_OVERRIDE[@] $1; then
+        override=true
+    elif array_contains BT_ARGS_PUBLISH[@] $1; then
+        publish=true
+    elif array_contains BT_ARGS_EXPLODE[@] $1; then
+        explode=true
+    elif array_contains BT_ARGS_SEARCH_SHA1[@] $1; then
+        searchBySha1=true
+    elif array_contains BT_ARGS_DEBUG[@] $1; then
+        clilog_level=$CLILOG_LEVEL_DEBUG
+    elif array_contains BT_ARGS_TRACE[@] $1; then
+        clilog_level=$CLILOG_LEVEL_TRACE
+    else
+        argsArray+=("$1")
+    fi
+}
+
+_handle_action_object_error() {
+    local action="$1"
+    local object="$2"
+    if [[ ${#argsArray[@]} -gt 1 ]]; then
+        print_error "unexpected $action target object: $object"
+        eval "usage_$action"
+        exit 1
+    elif [[ $showHelp == true ]]; then
+        eval "usage_$action"
+        exit 0
+    else 
+        print_error "a target object is expected"
+        eval "usage_$action"
+        exit 1
+    fi
+}
+
+_route() {
+    if [[ "$1" == "get" ]]; then
+        local -a getTargets=('repo' 'package' 'version' 'files')
+        if array_contains getTargets[@] "$2"; then
+            eval "get_$2 $@"
+        else
+            _handle_action_object_error "$1" "$2"
+        fi
+    elif [[ "$1" == "create" ]]; then
+        local -a createTargets=('repo' 'package' 'version')
+        if array_contains createTargets[@] "$2"; then
+            eval "create_$2 $@"
+        else
+            _handle_action_object_error "$1" "$2"
+        fi
+    elif [[ "$1" == "update" ]]; then
+        local -a updateTargets=('repo' 'package' 'version')
+        if array_contains updateTargets[@] "$2"; then
+            eval "update_$2 $@"
+        else
+            _handle_action_object_error "$1" "$2"
+        fi
+    elif [[ "$1" == "delete" ]]; then
+        local -a deleteTargets=('repo' 'package' 'version' 'file')
+        if array_contains deleteTargets[@] "$2"; then
+            eval "delete_$2 $@"
+        else
+            _handle_action_object_error "$1" "$2"
+        fi
+    elif [[ "$1" == "search" ]]; then
+        local -a searchTargets=('repo' 'package' 'file')
+        if array_contains searchTargets[@] "$2"; then
+            eval "search_$2 $@"
+        else
+            _handle_action_object_error "$1" "$2"
+        fi
+    fi
+}
+
+_handle_response_code() {
+    local -i responseCode=$1
+    clilog_debug "handle response code: $responseCode"
+    if [ $responseCode -ge 200 ] && [ $responseCode -lt 300 ]; then
+        exit 0
+    elif [ $responseCode -eq 400 ]; then
+        exit 100
+    elif [ $responseCode -eq 401 ]; then
+        exit 101
+    elif [ $responseCode -eq 403 ]; then
+        exit 103
+    elif [ $responseCode -eq 404 ]; then
+        exit 104
+    elif [ $responseCode -eq 409 ]; then
+        exit 109
+    else
+        exit 1
+    fi
+}
+
+_get_repo_owner() {
+    if [[ "$org" != "" ]]; then
+        echo "$org"
+    elif [[ "$user" != "" ]]; then
+        echo "$user"
+    else
+        echo "$username"
+    fi
+}
+
+get_package() {
+    get_package_help() {
+        local scriptname=`basename $0`
+        echo "Usage: $scriptname get package NAME [-U USER | -O ORG] [-R REPO]"
+    }
+    local repoOwner=`_get_repo_owner`
+    local pkgName=${argsArray[2]}
+    clilog_debug "repoOwner='$repoOwner', repo='$repo', pkgName='$pkgName'"
+    cliargs_assert_required "package name" "$pkgName" "get_package_help"
+    cliargs_assert_required "repo owner" "$repoOwner" "get_package_help"
+    cliargs_assert_required "repo name" "$repo" "get_package_help"
+    cliargs_assert_equals "args count" "${#argsArray[@]}" "3" "get_package_help" "Unexpected command argument: ${argsArray[3]}"
+    #Prepare
+    local tmpfile=`mktemp`
+    clilog_debug "get_package: Writing to temp file: $tmpfile"
+    local url="https://api.bintray.com/packages/$repoOwner/$repo/$pkgName"
+    clilog_debug "get_package: url = '$url'"
+    local -a curlArgs=("$url" "-s" "-w" "%{http_code}" "-o" "$tmpfile")
+    clilog_debug "get_package: curl args = ${curlArgs[@]}"
+    #Execute
+    local responseCode=`curl ${curlArgs[@]}`
+    clilog_debug "HTTP code: $responseCode"
+    local output=`cat $tmpfile`
+    echo "$output"
+    #Cleanup
+    clilog_trace "Deleting temp file $tmpfile"
+    rm "$tmpfile" 2>&1 1> /dev/null
+    clilog_debug "temp file deletion return code: $?"
+    #Exit
+    _handle_response_code $responseCode
+}
+
+main() {
+    clilog_trace "start main"
+    clilog_trace "calling init args"
+    _init_args
+    clilog_trace "calling cliargs parse"
+    cliargs_parse "$@"
+    clilog_trace "calling route"
+    _route "$@"
+}
+
+clilog_output_type=$CLILOG_OUT_FILE
+clilog_output_file="bt.log"
+main "$@"
