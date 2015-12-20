@@ -81,23 +81,26 @@ source $BASH_UTILS_HOME/lib/clilog
 # 1 - general error
 # 109 - conflict
 
+declare -r BT_BASH_VERSION="0.1.0-SNAPSHOT" 2> /dev/null
+
 usage() {
     local scriptname=`basename $0`
     echo "Usage: $scriptname ACTION [OBJECT] [ARGS] [OPTIONS]"
     echo "   ACTION  - The action to execute. Available actions:"
-    echo "             login"
-    echo "             get"
-    echo "             create"
-    echo "             update"
-    echo "             delete"
-    echo "             sign"
-    echo "             calc"
-    echo "             link"
-    echo "             unlink"
-    echo "             sync"
-    echo "             download"
-    echo "             upload"
-    echo "             search"
+    echo "             login    - verify and store the given credentials"
+    echo "             get      - get the metadata of a given object"
+    echo "             create   - create an object"
+    echo "             update   - update an object"
+    echo "             delete   - delete an object"
+    echo "             sign     - sign content"
+    echo "             calc     - calculate content"
+    echo "             link     - link entities"
+    echo "             unlink   - unlink entities"
+    echo "             sync     - sync content"
+    echo "             download - download content"
+    echo "             upload   - upload content"
+    echo "             search   - search for objects"
+    echo "             config   - configure the client (e.g. set default objects)"
     echo "   OBJECT  - The object type, one of:"
     echo "             repo"
     echo "             package"
@@ -302,42 +305,44 @@ _handle_action_object_error() {
     fi
 }
 
+declare -r action_get_objects='|repo|package|version|files|'
+declare -r action_create_objects='|repo|package|version|'
+declare -r action_update_objects='|repo|package|version|'
+declare -r action_delete_objects='|repo|package|version|file|'
+declare -r action_search_objects='|repo|package|file|'
+declare -r action_calc_objects='|metadata|'
+declare -r action_link_objects='|package|'
+declare -r action_unlink_objects='|package|'
+declare -r action_sign_objects='|version|file|'
+declare -r action_sync_objects='|maven-central|'
+declare -r single_verb_actions='|login|config|upload|download|'
+
 _route() {
-    if [[ "$1" == "get" ]]; then
-        local -a getTargets=('repo' 'package' 'version' 'files')
-        if array_contains getTargets[@] "$2"; then
-            eval "get_$2 $@"
+    if [[ "$1" != "" ]]; then
+        if [[ "$single_verb_actions" == *"|$1|"* ]]; then
+            local method="bt_$1"
+            clilog_debug "routing to method: $method"
+            eval "$method $@"
         else
-            _handle_action_object_error "$1" "$2"
+            local varName=action_${1}_objects
+            local actionObjects=${!varName}
+            if [[ "$actionObjects" != "" ]]; then
+                if [[ "$actionObjects" == *"|$2|"* ]]; then
+                    local method="bt_$1_$2"
+                    clilog_debug "routing to method: $method"
+                    eval "$method $@"
+                else 
+                    _handle_action_object_error "$1" "$2"
+                fi
+            else
+                print_error "Unknown action: $1"
+                usage
+                exit 1
+            fi
         fi
-    elif [[ "$1" == "create" ]]; then
-        local -a createTargets=('repo' 'package' 'version')
-        if array_contains createTargets[@] "$2"; then
-            eval "create_$2 $@"
-        else
-            _handle_action_object_error "$1" "$2"
-        fi
-    elif [[ "$1" == "update" ]]; then
-        local -a updateTargets=('repo' 'package' 'version')
-        if array_contains updateTargets[@] "$2"; then
-            eval "update_$2 $@"
-        else
-            _handle_action_object_error "$1" "$2"
-        fi
-    elif [[ "$1" == "delete" ]]; then
-        local -a deleteTargets=('repo' 'package' 'version' 'file')
-        if array_contains deleteTargets[@] "$2"; then
-            eval "delete_$2 $@"
-        else
-            _handle_action_object_error "$1" "$2"
-        fi
-    elif [[ "$1" == "search" ]]; then
-        local -a searchTargets=('repo' 'package' 'file')
-        if array_contains searchTargets[@] "$2"; then
-            eval "search_$2 $@"
-        else
-            _handle_action_object_error "$1" "$2"
-        fi
+    else 
+        usage
+        exit 1
     fi
 }
 
@@ -371,24 +376,25 @@ _get_repo_owner() {
     fi
 }
 
-get_package() {
-    get_package_help() {
+bt_get_package() {
+    bt_get_package_help() {
         local scriptname=`basename $0`
         echo "Usage: $scriptname get package NAME [-U USER | -O ORG] [-R REPO]"
     }
     local repoOwner=`_get_repo_owner`
     local pkgName=${argsArray[2]}
     clilog_debug "repoOwner='$repoOwner', repo='$repo', pkgName='$pkgName'"
-    cliargs_assert_required "package name" "$pkgName" "get_package_help"
-    cliargs_assert_required "repo owner" "$repoOwner" "get_package_help"
-    cliargs_assert_required "repo name" "$repo" "get_package_help"
-    cliargs_assert_equals "args count" "${#argsArray[@]}" "3" "get_package_help" "Unexpected command argument: ${argsArray[3]}"
+    cliargs_assert_required "package name" "$pkgName" "bt_get_package_help"
+    cliargs_assert_required "repo owner" "$repoOwner" "bt_get_package_help"
+    cliargs_assert_required "repo name" "$repo" "bt_get_package_help"
+    cliargs_assert_equals "args count" "${#argsArray[@]}" "3" "bt_get_package_help" "Unexpected command argument: ${argsArray[3]}"
     #Prepare
     local tmpfile=`mktemp`
     clilog_debug "get_package: Writing to temp file: $tmpfile"
     local url="https://api.bintray.com/packages/$repoOwner/$repo/$pkgName"
     clilog_debug "get_package: url = '$url'"
     local -a curlArgs=("$url" "-s" "-w" "%{http_code}" "-o" "$tmpfile")
+    curlArgs+=("-A" "bt-bash-cli/$BT_BASH_VERSION")
     clilog_debug "get_package: curl args = ${curlArgs[@]}"
     #Execute
     local responseCode=`curl ${curlArgs[@]}`
