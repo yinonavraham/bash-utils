@@ -367,6 +367,45 @@ join_lines() {
     echo "$joined"
 }
 
+print_pretty_json() {
+    echo "$1" | jq .
+}
+
+print_parsed_package_json() {
+    local json="$1"
+    local terminalWidth=`tput cols`
+    local valueColWidth=$((terminalWidth-20))
+    local parsedName=$(parse_json_string_prop "$json" "name")
+    local parsedDesc=$(parse_json_string_prop "$json" "desc")
+    parsedDesc=`chop_string_with_ellipsis "$parsedDesc" $valueColWidth`
+    local parsedOwner=$(parse_json_string_prop "$json" "owner")
+    local parsedRepo=$(parse_json_string_prop "$json" "repo")
+    local parsedLatestVersion=$(parse_json_string_prop "$json" "latest_version")
+    local parsedVersions=$(parse_json_string_prop "$json" "versions[]")
+    parsedVersions=$(join_lines "$parsedVersions" ", ")
+    local parsedLabels=$(parse_json_string_prop "$json" "labels[]")
+    parsedLabels=$(join_lines "$parsedLabels" ", ")
+    local parsedLicenses=$(parse_json_string_prop "$json" "licenses[]")
+    parsedLicenses=$(join_lines "$parsedLicenses" ", ")
+    local parsedCustomLicenses=$(parse_json_string_prop "$json" "custom_licenses[]")
+    parsedCustomLicenses=$(join_lines "$parsedCustomLicenses" ", ")
+    local parsedWebsite=$(parse_json_string_prop "$json" "website_url")
+    local parsedIssueTracker=$(parse_json_string_prop "$json" "issue_tracker_url")
+    local parsedVcs=$(parse_json_string_prop "$json" "vcs_url")
+    echo "-Name:            $parsedName"
+    echo "-Description:     $parsedDesc"
+    echo "-Owner:           $parsedOwner"
+    echo "-Repository:      $parsedRepo"
+    echo "-Latest Version:  $parsedLatestVersion"
+    echo "-Versions:        $parsedVersions"
+    echo "-Labels:          $parsedLabels"
+    echo "-Licenses:        $parsedLicenses"
+    echo "-Custom Licenses: $parsedCustomLicenses"
+    echo "-Website:         $parsedWebsite"
+    echo "-Issue Tracker:   $parsedIssueTracker"
+    echo "-Version Control: $parsedVcs"
+}
+
 bt_get_package() {
     bt_get_package_help() {
         local scriptname=`basename $0`
@@ -397,40 +436,10 @@ bt_get_package() {
     if [[ "$tmpfile" != "" ]]; then
         local output=`cat $tmpfile`
         if [[ "$prettyOutput" == "true" ]]; then
-            echo "$output" | jq .
+            print_pretty_json "$output"
         elif [[ "$parsedOutput" == "true" ]]; then
             if [[ "$responseCode" == "200" ]]; then
-                local terminalWidth=`tput cols`
-                local valueColWidth=$((terminalWidth-20))
-                local parsedName=$(parse_json_string_prop "$output" "name")
-                local parsedDesc=$(parse_json_string_prop "$output" "desc")
-                parsedDesc=`chop_string_with_ellipsis "$parsedDesc" $valueColWidth`
-                local parsedOwner=$(parse_json_string_prop "$output" "owner")
-                local parsedRepo=$(parse_json_string_prop "$output" "repo")
-                local parsedLatestVersion=$(parse_json_string_prop "$output" "latest_version")
-                local parsedVersions=$(parse_json_string_prop "$output" "versions[]")
-                parsedVersions=$(join_lines "$parsedVersions" ", ")
-                local parsedLabels=$(parse_json_string_prop "$output" "labels[]")
-                parsedLabels=$(join_lines "$parsedLabels" ", ")
-                local parsedLicenses=$(parse_json_string_prop "$output" "licenses[]")
-                parsedLicenses=$(join_lines "$parsedLicenses" ", ")
-                local parsedCustomLicenses=$(parse_json_string_prop "$output" "custom_licenses[]")
-                parsedCustomLicenses=$(join_lines "$parsedCustomLicenses" ", ")
-                local parsedWebsite=`echo "$output" | jq .website_url | sed s/^\"// | sed s/\"$//`
-                local parsedIssueTracker=`echo "$output" | jq .issue_tracker_url | sed s/^\"// | sed s/\"$//`
-                local parsedVcs=`echo "$output" | jq .vcs_url | sed s/^\"// | sed s/\"$//`
-                echo "-Name:            $parsedName"
-                echo "-Description:     $parsedDesc"
-                echo "-Owner:           $parsedOwner"
-                echo "-Repository:      $parsedRepo"
-                echo "-Latest Version:  $parsedLatestVersion"
-                echo "-Versions:        $parsedVersions"
-                echo "-Labels:          $parsedLabels"
-                echo "-Licenses:        $parsedLicenses"
-                echo "-Custom Licenses: $parsedCustomLicenses"
-                echo "-Website:         $parsedWebsite"
-                echo "-Issue Tracker:   $parsedIssueTracker"
-                echo "-Version Control: $parsedVcs"
+                print_parsed_package_json "$output"
             else 
                 local parsedMessage=$(parse_json_string_prop "$output" "message")
                 echo "MESSAGE: $parsedMessage"
