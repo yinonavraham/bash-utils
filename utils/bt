@@ -10,34 +10,34 @@ source $BASH_UTILS_HOME/lib/clilog
 # bt config unset NAME
 # bt config list
 # --- Repository ---
-# bt get repo NAME [-U USER | -O ORG]
-# bt create repo NAME [-O ORG] [--data-file FILE] [--type TYPE] [--premium] [--private] [--desc DESC] [--labels CSV]
-# bt update repo NAME [-O ORG] [--data-file FILE] [--desc DESC] [--labels CSV]
-# bt delete repo NAME [-O ORG]
-# bt search repo NAME [--desc DESC]
-# bt calc metadata [-O ORG] [-R REPO] [--path PATH] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
+# bt get repo NAME [-U USER | -O ORG] [--output-file FILE]
+# bt create repo NAME [-O ORG] [--input-file FILE] [--type TYPE] [--premium] [--private] [--desc DESC] [--labels CSV] [--output-file FILE]
+# bt update repo NAME [-O ORG] [--input-file FILE] [--desc DESC] [--labels CSV] [--output-file FILE]
+# bt delete repo NAME [-O ORG] [--output-file FILE]
+# bt search repo NAME [--desc DESC] [--output-file FILE]
+# bt calc metadata [-O ORG] [-R REPO] [--path PATH] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
 # --- Package ---
-# bt get package NAME [-U USER | -O ORG] [-R REPO]
-# bt create package NAME [-O ORG] [-R REPO] [--data-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV]
-# bt update package NAME [-O ORG] [-R REPO] [--data-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV]
-# bt delete package NAME [-O ORG] [-R REPO]
-# bt link package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG [--data-file FILE] [--path-prefix PATH]
-# bt unlink package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG
-# bt search package NAME [-U USER|-O ORG] [-R REPO] [--desc DESC]
+# bt get package NAME [-U USER | -O ORG] [-R REPO] [--output-file FILE]
+# bt create package NAME [-O ORG] [-R REPO] [--input-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV] [--output-file FILE]
+# bt update package NAME [-O ORG] [-R REPO] [--input-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV] [--output-file FILE]
+# bt delete package NAME [-O ORG] [-R REPO] [--output-file FILE]
+# bt link package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG [--input-file FILE] [--path-prefix PATH] [--output-file FILE]
+# bt unlink package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG [--output-file FILE]
+# bt search package NAME [-U USER|-O ORG] [-R REPO] [--desc DESC] [--output-file FILE]
 # --- Version ---
-# bt get version NAME [-U USER | -O ORG] [-R REPO] [-P PACKAGE]
-# bt create version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--desc DESC]
-# bt update version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--desc DESC]
-# bt delete version NAME [-O ORG] [-R REPO] [-P PACKAGE]
-# bt sign version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
-# bt sync maven-central [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--data-file FILE] [--sync-username USERNAME] [--sync-password PASSWORD] [--close]
+# bt get version NAME [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [--output-file FILE]
+# bt create version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--desc DESC] [--output-file FILE]
+# bt update version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--desc DESC] [--output-file FILE]
+# bt delete version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--output-file FILE]
+# bt sign version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
+# bt sync maven-central [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--input-file FILE] [--sync-username USERNAME] [--sync-password PASSWORD] [--close] [--output-file FILE]
 # --- File ---
-# bt get files [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--include-unpublished]
-# bt upload FILE PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--content-type TYPE] [--override] [--publish] [--explode] [--debian DISTS:COMPS:ARCHS] [--vagrant BOX]
+# bt get files [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--include-unpublished] [--output-file FILE]
+# bt upload FILE PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--content-type TYPE] [--override] [--publish] [--explode] [--debian DISTS:COMPS:ARCHS] [--vagrant BOX] [--output-file FILE]
 # bt download PATH FILE [-O ORG] [-R REPO]
-# bt delete file PATH [-O ORG] [-R REPO]
-# bt sign file PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--data-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE]
-# bt search file NAME [-U USER|-O ORG] [-R REPO] [--search-sha1]
+# bt delete file PATH [-O ORG] [-R REPO] [--output-file FILE]
+# bt sign file PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
+# bt search file NAME [-U USER|-O ORG] [-R REPO] [--search-sha1] [--output-file FILE]
 
 # --- Options ---
 # -O, --org ORG
@@ -45,7 +45,7 @@ source $BASH_UTILS_HOME/lib/clilog
 # -P, --pkg PKG
 # -V, --version VERSION
 #     --path PATH
-#     --data-file FILE
+#     --input-file FILE
 #     --type TYPE
 #     --premium
 #     --private
@@ -71,6 +71,10 @@ source $BASH_UTILS_HOME/lib/clilog
 # -v, --verbose
 # -u, --username USERNAME
 # -p, --apikey APIKEY
+#     --trace
+#     --debug
+#     --pretty
+#     --parsed
 
 #Exit codes:
 # 0 - success
@@ -123,7 +127,8 @@ declare -r           BT_ARGS_REPO="-R|--repo"
 declare -r            BT_ARGS_PKG="-P|--pkg"
 declare -r        BT_ARGS_VERSION="-V|--version"
 declare -r           BT_ARGS_PATH="--path"
-declare -r       BT_ARGS_DATAFILE="--data-file"
+declare -r      BT_ARGS_INPUTFILE="--input-file"
+declare -r     BT_ARGS_OUTPUTFILE="--output-file"
 declare -r           BT_ARGS_TYPE="--type"
 declare -r        BT_ARGS_PREMIUM="--premium"
 declare -r        BT_ARGS_PRIVATE="--private"
@@ -149,8 +154,10 @@ declare -r         BT_ARGS_SILENT="-s|--silent"
 declare -r        BT_ARGS_VERBOSE="-v|--verbose"
 declare -r          BT_ARGS_DEBUG="--debug"
 declare -r          BT_ARGS_TRACE="--trace"
+declare -r         BT_ARGS_PRETTY="--pretty"
+declare -r         BT_ARGS_PARSED="--parsed"
 
-declare -r BT_ARGS_REQUIRE_VALUE="|$BT_ARGS_USERNAME|$BT_ARGS_APIKEY|$BT_ARGS_USER|$BT_ARGS_ORG|$BT_ARGS_REPO|$BT_ARGS_PKG|$BT_ARGS_VERSION|$BT_ARGS_PATH|$BT_ARGS_DATAFILE|$BT_ARGS_TYPE|$BT_ARGS_TYPE|$BT_ARGS_DESC|$BT_ARGS_LABELS|$BT_ARGS_PASSPHRASE|$BT_ARGS_PRIVATEKEY|$BT_ARGS_LICENSE|$BT_ARGS_CUSTOM_LICENSE|$BT_ARGS_SRC_PKG|$BT_ARGS_PATH_PREFIX|$BT_ARGS_SYNC_USERNAME|$BT_ARGS_SYNC_PASSWORD|$BT_ARGS_CONTENT_TYPE|$BT_ARGS_DEBIAN|$BT_ARGS_VAGRANT|"
+declare -r BT_ARGS_REQUIRE_VALUE="|$BT_ARGS_USERNAME|$BT_ARGS_APIKEY|$BT_ARGS_USER|$BT_ARGS_ORG|$BT_ARGS_REPO|$BT_ARGS_PKG|$BT_ARGS_VERSION|$BT_ARGS_PATH|$BT_ARGS_INPUTFILE|$BT_ARGS_OUTPUTFILE|$BT_ARGS_TYPE|$BT_ARGS_TYPE|$BT_ARGS_DESC|$BT_ARGS_LABELS|$BT_ARGS_PASSPHRASE|$BT_ARGS_PRIVATEKEY|$BT_ARGS_LICENSE|$BT_ARGS_CUSTOM_LICENSE|$BT_ARGS_SRC_PKG|$BT_ARGS_PATH_PREFIX|$BT_ARGS_SYNC_USERNAME|$BT_ARGS_SYNC_PASSWORD|$BT_ARGS_CONTENT_TYPE|$BT_ARGS_DEBIAN|$BT_ARGS_VAGRANT|"
 
 _init_args() {
     username="$BINTRAY_USERNAME"
@@ -183,8 +190,10 @@ cliargs_parse_arg() {
         description="$2"
     elif [[ "|$BT_ARGS_TYPE|" == *"|$1|"* ]]; then
         repoType="$2"
-    elif [[ "|$BT_ARGS_DATAFILE|" == *"|$1|"* ]]; then
-        dataFile="$2"
+    elif [[ "|$BT_ARGS_INPUTFILE|" == *"|$1|"* ]]; then
+        inputFile="$2"
+    elif [[ "|$BT_ARGS_OUTPUTFILE|" == *"|$1|"* ]]; then
+        outputFile="$2"
     elif [[ "|$BT_ARGS_PATH|" == *"|$1|"* ]]; then
         path="$2"
     elif [[ "|$BT_ARGS_PKG|" == *"|$1|"* ]]; then
@@ -241,6 +250,10 @@ cliargs_parse_arg() {
         clilog_level=$CLILOG_LEVEL_DEBUG
     elif [[ "|$BT_ARGS_TRACE|" == *"|$1|"* ]]; then
         clilog_level=$CLILOG_LEVEL_TRACE
+    elif [[ "|$BT_ARGS_PRETTY|" == *"|$1|"* ]]; then
+        prettyOutput=true
+    elif [[ "|$BT_ARGS_PARSED|" == *"|$1|"* ]]; then
+        parsedOutput=true
     else
         argsArray+=("$1")
     fi
@@ -304,7 +317,7 @@ _route() {
     fi
 }
 
-_handle_response_code() {
+_exit_response_code() {
     local -i responseCode=$1
     clilog_debug "handle response code: $responseCode"
     if [ $responseCode -ge 200 ] && [ $responseCode -lt 300 ]; then
@@ -334,6 +347,26 @@ _get_repo_owner() {
     fi
 }
 
+parse_json_string_prop() {
+    local json="$1"
+    local prop="$2"
+    local parsed=`echo "$json" | jq ."$prop" | sed s/^\"// | sed s/\"$//`
+    echo "$parsed"
+}
+
+join_lines() {
+    local input="$1"
+    local separator="$2"
+    local joined=""
+    while read -r item; do
+        if [[ "$joined" != "" ]]; then
+            joined+="$separator"
+        fi
+        joined+="$item"
+    done <<< "$input"
+    echo "$joined"
+}
+
 bt_get_package() {
     bt_get_package_help() {
         local scriptname=`basename $0`
@@ -347,24 +380,71 @@ bt_get_package() {
     cliargs_assert_required "repo name" "$repo" "bt_get_package_help"
     cliargs_assert_equals "args count" "${#argsArray[@]}" "3" "bt_get_package_help" "Unexpected command argument: ${argsArray[3]}"
     #Prepare
-    local tmpfile=`mktemp`
-    clilog_debug "get_package: Writing to temp file: $tmpfile"
+    local curlOutput="$outputFile"
+    if [[ "$curlOutput" == "" ]]; then
+        local tmpfile=`mktemp`
+        clilog_debug "get_package: Writing to temp file: $tmpfile"
+        curlOutput="$tmpfile"
+    fi
     local url="https://api.bintray.com/packages/$repoOwner/$repo/$pkgName"
     clilog_debug "get_package: url = '$url'"
-    local -a curlArgs=("$url" "-s" "-w" "%{http_code}" "-o" "$tmpfile")
+    local -a curlArgs=("$url" "-s" "-w" "%{http_code}" "-o" "$curlOutput")
     curlArgs+=("-A" "bt-bash-cli/$BT_BASH_VERSION")
     clilog_debug "get_package: curl args = ${curlArgs[@]}"
     #Execute
-    local responseCode=`curl ${curlArgs[@]}`
+    local responseCode=`curl "${curlArgs[@]}"`
     clilog_debug "HTTP code: $responseCode"
-    local output=`cat $tmpfile`
-    echo "$output"
-    #Cleanup
-    clilog_trace "Deleting temp file $tmpfile"
-    rm "$tmpfile" 2>&1 1> /dev/null
-    clilog_debug "temp file deletion return code: $?"
+    if [[ "$tmpfile" != "" ]]; then
+        local output=`cat $tmpfile`
+        if [[ "$prettyOutput" == "true" ]]; then
+            echo "$output" | jq .
+        elif [[ "$parsedOutput" == "true" ]]; then
+            if [[ "$responseCode" == "200" ]]; then
+                local terminalWidth=`tput cols`
+                local valueColWidth=$((terminalWidth-20))
+                local parsedName=$(parse_json_string_prop "$output" "name")
+                local parsedDesc=$(parse_json_string_prop "$output" "desc")
+                parsedDesc=`chop_string_with_ellipsis "$parsedDesc" $valueColWidth`
+                local parsedOwner=$(parse_json_string_prop "$output" "owner")
+                local parsedRepo=$(parse_json_string_prop "$output" "repo")
+                local parsedLatestVersion=$(parse_json_string_prop "$output" "latest_version")
+                local parsedVersions=$(parse_json_string_prop "$output" "versions[]")
+                parsedVersions=$(join_lines "$parsedVersions" ", ")
+                local parsedLabels=$(parse_json_string_prop "$output" "labels[]")
+                parsedLabels=$(join_lines "$parsedLabels" ", ")
+                local parsedLicenses=$(parse_json_string_prop "$output" "licenses[]")
+                parsedLicenses=$(join_lines "$parsedLicenses" ", ")
+                local parsedCustomLicenses=$(parse_json_string_prop "$output" "custom_licenses[]")
+                parsedCustomLicenses=$(join_lines "$parsedCustomLicenses" ", ")
+                local parsedWebsite=`echo "$output" | jq .website_url | sed s/^\"// | sed s/\"$//`
+                local parsedIssueTracker=`echo "$output" | jq .issue_tracker_url | sed s/^\"// | sed s/\"$//`
+                local parsedVcs=`echo "$output" | jq .vcs_url | sed s/^\"// | sed s/\"$//`
+                echo "-Name:            $parsedName"
+                echo "-Description:     $parsedDesc"
+                echo "-Owner:           $parsedOwner"
+                echo "-Repository:      $parsedRepo"
+                echo "-Latest Version:  $parsedLatestVersion"
+                echo "-Versions:        $parsedVersions"
+                echo "-Labels:          $parsedLabels"
+                echo "-Licenses:        $parsedLicenses"
+                echo "-Custom Licenses: $parsedCustomLicenses"
+                echo "-Website:         $parsedWebsite"
+                echo "-Issue Tracker:   $parsedIssueTracker"
+                echo "-Version Control: $parsedVcs"
+            else 
+                local parsedMessage=$(parse_json_string_prop "$output" "message")
+                echo "MESSAGE: $parsedMessage"
+            fi
+        else
+            echo "$output"
+        fi
+        #Cleanup
+        clilog_trace "Deleting temp file $tmpfile"
+        rm "$tmpfile" 2>&1 1> /dev/null
+        clilog_debug "temp file deletion return code: $?"
+    fi
     #Exit
-    _handle_response_code $responseCode
+    _exit_response_code $responseCode
 }
 
 main() {

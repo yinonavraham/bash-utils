@@ -39,3 +39,9 @@ get_value_or_default() {
 		echo "$value"
 	fi
 }
+
+chop_string_with_ellipsis() {
+	local s="$1"
+	local maxlen=$2
+	echo "$s" | awk -v len=$maxlen '{ if (length($0) > len) print substr($0, 1, len-3) "..."; else print; }'
+}
