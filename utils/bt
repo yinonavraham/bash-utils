@@ -165,6 +165,14 @@ _init_args() {
     org="$BINTRAY_ORG"
     repo="$BINTRAY_REPO"
     package="$BINTRAY_PACKAGE"
+    bintrayApiUrl="$BINTRAY_API_URL"
+    if [[ "$bintrayApiUrl" == "" ]]; then
+        bintrayApiUrl="https://api.bintray.com"
+    fi
+    bintrayDlUrl="$BINTRAY_DL_URL"
+    if [[ "$bintrayDlUrl" == "" ]]; then
+        bintrayDlUrl="https://dl.bintray.com"
+    fi
     argsArray=()
 }
 
@@ -317,23 +325,25 @@ _route() {
     fi
 }
 
-_exit_response_code() {
+declare -a curlArgs=()
+
+_exit_code_from_response_code() {
     local -i responseCode=$1
     clilog_debug "handle response code: $responseCode"
     if [ $responseCode -ge 200 ] && [ $responseCode -lt 300 ]; then
-        exit 0
+        return 0
     elif [ $responseCode -eq 400 ]; then
-        exit 100
+        return 100
     elif [ $responseCode -eq 401 ]; then
-        exit 101
+        return 101
     elif [ $responseCode -eq 403 ]; then
-        exit 103
+        return 103
     elif [ $responseCode -eq 404 ]; then
-        exit 104
+        return 104
     elif [ $responseCode -eq 409 ]; then
-        exit 109
+        return 109
     else
-        exit 1
+        return 1
     fi
 }
 
@@ -399,6 +409,45 @@ print_parsed_package_json() {
     echo "-Version Control: $(parse_json_string_prop "$json" "vcs_url")"
 }
 
+_run_curl() {
+    local handleParsedOutputResponse="$1"
+    #Prepare
+    local curlOutput="$outputFile"
+    if [[ "$curlOutput" == "" ]]; then
+        local tmpfile=`mktemp`
+        clilog_debug "Writing to temp file: $tmpfile"
+        curlOutput="$tmpfile"
+    fi
+    curlArgs+=("-s" "-w" "%{http_code}" "-o" "$curlOutput")
+    curlArgs+=("-A" "bt-bash-cli/$BT_BASH_VERSION")
+    
+    #Execute
+    local responseCode=`curl "${curlArgs[@]}"`
+    clilog_debug "HTTP code: $responseCode"
+    if [[ "$tmpfile" != "" ]]; then
+        local output=`cat $tmpfile`
+        if [[ "$prettyOutput" == "true" ]]; then
+            print_pretty_json "$output"
+        elif [[ "$parsedOutput" == "true" ]]; then
+            if [[ "$handleParsedOutputResponse" != "" ]]; then
+                eval "$handleParsedOutputResponse" "$responseCode" \'${output}\'
+            fi
+            if [[ $? -ne 0 ]]; then
+                local parsedMessage=$(parse_json_string_prop "$output" "message")
+                echo "MESSAGE: $parsedMessage"
+            fi
+        else
+            echo "$output"
+        fi
+        #Cleanup
+        clilog_trace "Deleting temp file $tmpfile"
+        rm "$tmpfile" 2>&1 1> /dev/null
+        clilog_debug "temp file deletion return code: $?"
+    fi
+    _exit_code_from_response_code $responseCode
+    return $?
+}
+
 handle_parsed_package_output_response() {
     local responseCode="$1"
     local output="$2"
@@ -422,39 +471,14 @@ bt_get_package() {
     cliargs_assert_required "repo name" "$repo" "bt_get_package_help"
     cliargs_assert_equals "args count" "${#argsArray[@]}" "3" "bt_get_package_help" "Unexpected command argument: ${argsArray[3]}"
     #Prepare
-    local curlOutput="$outputFile"
-    if [[ "$curlOutput" == "" ]]; then
-        local tmpfile=`mktemp`
-        clilog_debug "get_package: Writing to temp file: $tmpfile"
-        curlOutput="$tmpfile"
-    fi
-    local url="https://api.bintray.com/packages/$repoOwner/$repo/$pkgName"
+    local url="$bintrayApiUrl/packages/$repoOwner/$repo/$pkgName"
     clilog_debug "get_package: url = '$url'"
-    local -a curlArgs=("$url" "-s" "-w" "%{http_code}" "-o" "$curlOutput")
-    curlArgs+=("-A" "bt-bash-cli/$BT_BASH_VERSION")
-    clilog_debug "get_package: curl args = ${curlArgs[@]}"
+    curlArgs+=("$url")
+
     #Execute
-    local responseCode=`curl "${curlArgs[@]}"`
-    clilog_debug "HTTP code: $responseCode"
-    if [[ "$tmpfile" != "" ]]; then
-        local output=`cat $tmpfile`
-        if [[ "$prettyOutput" == "true" ]]; then
-            print_pretty_json "$output"
-        elif [[ "$parsedOutput" == "true" ]]; then
-            if ! handle_parsed_package_output_response "$responseCode" "$output"; then
-                local parsedMessage=$(parse_json_string_prop "$output" "message")
-                echo "MESSAGE: $parsedMessage"
-            fi
-        else
-            echo "$output"
-        fi
-        #Cleanup
-        clilog_trace "Deleting temp file $tmpfile"
-        rm "$tmpfile" 2>&1 1> /dev/null
-        clilog_debug "temp file deletion return code: $?"
-    fi
+    _run_curl "handle_parsed_package_output_response"
     #Exit
-    _exit_response_code $responseCode
+    exit $?
 }
 
 main() {
