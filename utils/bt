@@ -10,6 +10,7 @@ source $BASH_UTILS_HOME/lib/clilog
 # bt config unset NAME
 # bt config list
 # --- Repository ---
+# bt list repos [-U USER | -O ORG] [--output-file FILE]
 # bt get repo NAME [-U USER | -O ORG] [--output-file FILE]
 # bt create repo NAME [-O ORG] [--input-file FILE] [--type TYPE] [--premium] [--private] [--desc DESC] [--labels CSV] [--output-file FILE]
 # bt update repo NAME [-O ORG] [--input-file FILE] [--desc DESC] [--labels CSV] [--output-file FILE]
@@ -17,6 +18,7 @@ source $BASH_UTILS_HOME/lib/clilog
 # bt search repo NAME [--desc DESC] [--output-file FILE]
 # bt calc metadata [-O ORG] [-R REPO] [--path PATH] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
 # --- Package ---
+# bt list packages [-U USER | -O ORG] [-R REPO] [--output-file FILE]
 # bt get package NAME [-U USER | -O ORG] [-R REPO] [--output-file FILE]
 # bt create package NAME [-O ORG] [-R REPO] [--input-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV] [--output-file FILE]
 # bt update package NAME [-O ORG] [-R REPO] [--input-file FILE] [--license CSV] [--custom-license CSV] [--desc DESC] [--labels CSV] [--output-file FILE]
@@ -25,16 +27,18 @@ source $BASH_UTILS_HOME/lib/clilog
 # bt unlink package [-O ORG] [-R REPO] --source-package SUBJ/REPO/PKG [--output-file FILE]
 # bt search package NAME [-U USER|-O ORG] [-R REPO] [--desc DESC] [--output-file FILE]
 # --- Version ---
+# bt list versions [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [--output-file FILE]
 # bt get version NAME [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [--output-file FILE]
 # bt create version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--desc DESC] [--output-file FILE]
 # bt update version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--desc DESC] [--output-file FILE]
 # bt delete version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--output-file FILE]
+# bt download version NAME [-O ORG] [-R REPO] [-P PACKAGE]
 # bt sign version NAME [-O ORG] [-R REPO] [-P PACKAGE] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
 # bt sync maven-central [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--input-file FILE] [--sync-username USERNAME] [--sync-password PASSWORD] [--close] [--output-file FILE]
 # --- File ---
 # bt get files [-U USER | -O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--include-unpublished] [--output-file FILE]
 # bt upload FILE PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--content-type TYPE] [--override] [--publish] [--explode] [--debian DISTS:COMPS:ARCHS] [--vagrant BOX] [--output-file FILE]
-# bt download PATH FILE [-O ORG] [-R REPO]
+# bt download file PATH [-O ORG] [-R REPO] [--output-file FILE]
 # bt delete file PATH [-O ORG] [-R REPO] [--output-file FILE]
 # bt sign file PATH [-O ORG] [-R REPO] [-P PACKAGE] [-V VERSION] [--input-file FILE] [--passphrase PASSPHRASE] [--privatekey FILE] [--output-file FILE]
 # bt search file NAME [-U USER|-O ORG] [-R REPO] [--search-sha1] [--output-file FILE]
@@ -92,6 +96,7 @@ usage() {
     echo "Usage: $scriptname ACTION [OBJECT] [ARGS] [OPTIONS]"
     echo "   ACTION  - The action to execute. Available actions:"
     echo "             login    - verify and store the given credentials"
+    echo "             list     - list objects of given types"
     echo "             get      - get the metadata of a given object"
     echo "             create   - create an object"
     echo "             update   - update an object"
@@ -106,9 +111,9 @@ usage() {
     echo "             search   - search for objects"
     echo "             config   - configure the client (e.g. set default objects)"
     echo "   OBJECT  - The object type, one of:"
-    echo "             repo"
-    echo "             package"
-    echo "             version"
+    echo "             repo(s)"
+    echo "             package(s)"
+    echo "             version(s)"
     echo "             file(s)"
     echo "             metadata"
     echo "   ARGS    - The arguments for the command (specific per command)"
@@ -284,6 +289,7 @@ _handle_action_object_error() {
     fi
 }
 
+declare -r action_list_objects='|repos|packages|versions|'
 declare -r action_get_objects='|repo|package|version|files|'
 declare -r action_create_objects='|repo|package|version|'
 declare -r action_update_objects='|repo|package|version|'
@@ -479,6 +485,34 @@ bt_get_package() {
     _run_curl "handle_parsed_package_output_response"
     #Exit
     exit $?
+}
+
+bt_list_repos() {
+    bt_list_repos_help() {
+        local scriptname=`basename $0`
+        echo "Usage: $scriptname list repos [-U USER | -O ORG]"
+    }
+    handle_parsed_repos_output_response() {
+        local responseCode="$1"
+        local output="$2"
+        if [[ "$responseCode" == "200" ]]; then
+            echo "$output" | jq -r ".[] | .owner+\" / \"+.name"
+            return 0
+        fi
+        return 1
+    }
+    local repoOwner=`_get_repo_owner`
+    cliargs_assert_required "repo owner" "$repoOwner" "bt_list_repos_help"
+    cliargs_assert_equals "args count" "${#argsArray[@]}" "2" "bt_list_repos_help" "Unexpected command argument: ${argsArray[2]}"
+    #Prepare
+    local url="$bintrayApiUrl/repos/$repoOwner"
+    clilog_debug "list_repos: url = '$url'"
+    curlArgs+=("$url")
+
+    #Execute
+    _run_curl "handle_parsed_repos_output_response"
+    #Exit
+    exit $?   
 }
 
 main() {
