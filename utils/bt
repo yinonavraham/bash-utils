@@ -516,6 +516,38 @@ bt_get_package() {
     exit $?
 }
 
+bt_list_versions() {
+    bt_list_versions_help() {
+        local scriptname=`basename $0`
+        echo "Usage: $scriptname list versions [-U USER | -O ORG] [-R REPO] [-P PACKAGE]"
+    }
+    handle_parsed_versions_output_response() {
+        local responseCode="$1"
+        local output="$2"
+        if [[ "$responseCode" == "200" ]]; then
+            echo "$output" | jq -r ".versions[]"
+            return 0
+        fi
+        return 1
+    }
+    local repoOwner=`_get_repo_owner`
+    parsedOutput=true
+    prettyOutput=false
+    cliargs_assert_required "repo owner" "$repoOwner" "bt_list_versions_help"
+    cliargs_assert_required "repo name" "$repo" "bt_list_versions_help"
+    cliargs_assert_required "package name" "$pkg" "bt_list_versions_help"
+    cliargs_assert_equals "args count" "${#argsArray[@]}" "2" "bt_list_versions_help" "Unexpected command argument: ${argsArray[2]}"
+    #Prepare
+    local url="$bintrayApiUrl/packages/$repoOwner/$repo/$pkg"
+    clilog_debug "list_versions: url = '$url'"
+    curlArgs+=("$url")
+
+    #Execute
+    _run_curl "handle_parsed_versions_output_response"
+    #Exit
+    exit $?   
+}
+
 bt_list_repos() {
     bt_list_repos_help() {
         local scriptname=`basename $0`
