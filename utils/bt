@@ -464,6 +464,35 @@ handle_parsed_package_output_response() {
     return 1
 }
 
+bt_list_packages() {
+    bt_list_packages_help() {
+        local scriptname=`basename $0`
+        echo "Usage: $scriptname list packages [-U USER | -O ORG] [-R REPO]"
+    }
+    handle_parsed_packages_output_response() {
+        local responseCode="$1"
+        local output="$2"
+        if [[ "$responseCode" == "200" ]]; then
+            echo "$output" | jq -r ".[].name"
+            return 0
+        fi
+        return 1
+    }
+    local repoOwner=`_get_repo_owner`
+    cliargs_assert_required "repo owner" "$repoOwner" "bt_list_packages_help"
+    cliargs_assert_required "repo name" "$repo" "bt_list_packages_help"
+    cliargs_assert_equals "args count" "${#argsArray[@]}" "2" "bt_list_packages_help" "Unexpected command argument: ${argsArray[2]}"
+    #Prepare
+    local url="$bintrayApiUrl/repos/$repoOwner/$repo/packages"
+    clilog_debug "list_packages: url = '$url'"
+    curlArgs+=("$url")
+
+    #Execute
+    _run_curl "handle_parsed_packages_output_response"
+    #Exit
+    exit $?   
+}
+
 bt_get_package() {
     bt_get_package_help() {
         local scriptname=`basename $0`
