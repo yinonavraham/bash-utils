@@ -169,7 +169,7 @@ _init_args() {
     apikey="$BINTRAY_APIKEY"
     org="$BINTRAY_ORG"
     repo="$BINTRAY_REPO"
-    package="$BINTRAY_PACKAGE"
+    pkg="$BINTRAY_PACKAGE"
     bintrayApiUrl="$BINTRAY_API_URL"
     if [[ "$bintrayApiUrl" == "" ]]; then
         bintrayApiUrl="https://api.bintray.com"
