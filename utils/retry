@@ -1,0 +1,80 @@
+#/usr/bin/env bash
+
+retry_message_prefix=""
+retry_max_attempts=3
+retry_max_sleep_time=10
+retry_sleep_time_factor=2
+retry_verbose=false
+
+function retry_usage() {
+  echo "Utility for executing a command with retries in case it fails
+Usage:  retry [OPTIONS] CMD [ARGS]
+
+Options:
+  --max-attempts=<number>       maximum number of attempts (default: 3)
+  --max-sleep-time=<seconds>    maximum seconds to sleep between attempts (default: 10 seconds)
+  --sleep-time-factor=<factor>  factor to use when calculating the sleep time for the next attempt (default: 2)
+  --name=<name>                 name for the retry command, used for verbose output
+  --verbose                     print verbose messages when the command fails and retried (default: false)
+  --help                        print this help
+"
+}
+
+function retry_echo_verbose() {
+  if [[ "${retry_verbose}" == true ]]; then
+    echo "${retry_message_prefix}$*"
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  if [[ "${1}" != "-"* ]]; then
+    break
+  fi
+  arg="${1}"
+  case "${arg}" in
+    --name=*)
+      retry_message_prefix="${arg#--name=*}: "
+      ;;
+    --max-attempts=*)
+      retry_max_attempts="${arg#--max-attempts=*}"
+      ;;
+    --max-sleep-time=*)
+      retry_max_sleep_time="${arg#--max-sleep-time=*}"
+      ;;
+    --sleep-time-factor=*)
+      retry_sleep_time_factor="${arg#--sleep-time-factor=*}"
+      ;;
+    --verbose)
+      retry_verbose=true
+      ;;
+    --help)
+      retry_usage
+      exit 0
+      ;;
+    *)
+      echo "${arg}: invalid command option" >&2
+      exit 1
+  esac
+  shift
+done
+
+retry_sleep_time=1
+retry_attempt=1
+while true; do
+  if [[ ${retry_attempt} -gt 1 ]]; then
+    retry_echo_verbose "attempt ${retry_attempt} of ${retry_max_attempts}..." >&2
+  fi
+  if "$@"; then
+    exit 0
+  fi
+  retry_attempt=$((retry_attempt+1))
+  if [[ ${retry_attempt} -gt ${retry_max_attempts} ]]; then
+    retry_echo_verbose "failed, no attempts left." >&2
+    exit 1
+  fi
+  sleep ${retry_sleep_time}
+  retry_sleep_time=$((retry_sleep_time * retry_sleep_time_factor))
+  if [[ ${retry_sleep_time} -gt ${retry_max_sleep_time} ]]; then
+    retry_sleep_time=${retry_max_sleep_time}
+  fi
+done
