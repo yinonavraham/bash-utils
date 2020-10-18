@@ -4,7 +4,7 @@
 
 function urlencode_usage() {
   echo "Encode a string as URL friendly encoded string
-Usage:  urlencode [OPTIONS] VALUE
+Usage:  urlencode [OPTIONS] [--] VALUE
 
 Options:
   -e,--encode  encode the provided value (default)
@@ -61,6 +61,10 @@ while [[ $# -gt 0 ]]; do
   	--help)
       urlencode_usage
       exit 0
+      ;;
+    --) # to support encoding / decoding values that start with '-'
+      shift
+      break
       ;;
     *)
       echo "[ERROR] ${arg}: invalid command option" >&2
