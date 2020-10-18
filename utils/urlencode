@@ -4,8 +4,45 @@
 
 function urlencode_usage() {
   echo "Encode a string as URL friendly encoded string
-Usage:  urlencode [OPTIONS] VALUE"
+Usage:  urlencode [OPTIONS] VALUE
+
+Options:
+  -e,--encode  encode the provided value (default)
+  -d,--decode  decode the provided value
+"
 }
+
+function do_encode() {
+  local value="${1}"
+  local LC_COLLATE=C
+  local length="${#value}"
+  for (( i = 0; i < length; i++ )); do
+    local c="${value:i:1}"
+    case $c in
+      [a-zA-Z0-9.~_-]) 
+        printf "%s" "$c"
+        ;;
+      *) 
+        printf '%%%02X' "'$c"
+        ;;
+    esac
+  done
+}
+
+function do_decode() {
+  local value="${1}"
+  local url_encoded="${value//+/ }"
+  printf '%b' "${url_encoded//%/\\x}"
+}
+
+function urlencode_op_assert_not_set() {
+  if [[ -n "${urlencode_op}" ]]; then
+  	echo "[ERROR] operation already set, cannot provide both --encode and --decode options" >&2
+  	exit 1
+  fi
+}
+
+urlencode_op=
 
 while [[ $# -gt 0 ]]; do
   if [[ "${1}" != "-"* ]]; then
@@ -13,29 +50,36 @@ while [[ $# -gt 0 ]]; do
   fi
   arg="${1}"
   case "${arg}" in
+  	-e|--encode)
+      urlencode_op_assert_not_set
+      urlencode_op=encode
+      ;;
+  	-d|--decode)
+      urlencode_op_assert_not_set
+      urlencode_op=decode
+      ;;
   	--help)
       urlencode_usage
       exit 0
       ;;
     *)
-      echo "${arg}: invalid command option" >&2
+      echo "[ERROR] ${arg}: invalid command option" >&2
       exit 1
       ;;
   esac
   shift
 done
 
-value="${1}"
-LC_COLLATE=C
-length="${#value}"
-for (( i = 0; i < length; i++ )); do
-  c="${value:i:1}"
-  case $c in
-    [a-zA-Z0-9.~_-]) 
-      printf "%s" "$c"
-      ;;
-    *) 
-      printf '%%%02X' "'$c"
-      ;;
-  esac
-done
+urlencode_op="${urlencode_op:-encode}"
+
+case "${urlencode_op}" in
+  encode)
+    do_encode "${1}"
+    ;;
+  decode)
+    do_decode "${1}"
+    ;;
+  *)
+    echo "[ERROR] ${urlencode_op}: unknown operation" >&2
+    exit 1
+esac
